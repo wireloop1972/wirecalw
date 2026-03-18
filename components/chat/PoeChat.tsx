@@ -1,26 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
 import { usePoeChat, type Message } from "@/hooks/usePoeChat";
+
+const PoeAvatar = () => (
+  <div className="mr-3 h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-wl-orange/60">
+    <Image
+      src="/images/poe.png"
+      alt="Poe"
+      width={36}
+      height={36}
+      className="h-full w-full object-cover"
+    />
+  </div>
+);
 
 const MessageBubble = ({ message }: { message: Message }) => {
   const isUser = message.role === "user";
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      {!isUser && (
-        <div
-          className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center
-            rounded-full bg-amber-800 text-sm font-semibold text-amber-50"
-        >
-          P
-        </div>
-      )}
+      {!isUser && <PoeAvatar />}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? "bg-zinc-800 text-zinc-50"
-            : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+            ? "bg-wl-orange text-wl-black"
+            : "bg-wl-surface text-wl-text"
         }`}
       >
         {message.content}
@@ -51,12 +57,9 @@ const PoeChat = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-6"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
-          <p className="mt-20 text-center text-sm text-zinc-400">
+          <p className="mt-20 text-center text-sm text-wl-muted">
             Begin your conversation with Poe.
           </p>
         )}
@@ -65,16 +68,8 @@ const PoeChat = () => {
         ))}
         {isLoading && (
           <div className="flex justify-start mb-4">
-            <div
-              className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center
-                rounded-full bg-amber-800 text-sm font-semibold text-amber-50"
-            >
-              P
-            </div>
-            <div
-              className="rounded-2xl bg-zinc-100 px-4 py-3 text-sm text-zinc-500
-                dark:bg-zinc-800 dark:text-zinc-400"
-            >
+            <PoeAvatar />
+            <div className="rounded-2xl bg-wl-surface px-4 py-3 text-sm text-wl-muted">
               Poe is composing a reply&hellip;
             </div>
           </div>
@@ -82,16 +77,17 @@ const PoeChat = () => {
       </div>
 
       {error && (
-        <div className="mx-4 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700
-          dark:bg-red-900/30 dark:text-red-300">
+        <div
+          className="mx-4 mb-2 rounded-lg border border-red-500/20
+            bg-red-500/10 px-3 py-2 text-sm text-red-400"
+        >
           {error}
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="flex gap-2 border-t border-zinc-200 px-4 py-3
-          dark:border-zinc-700"
+        className="flex gap-2 border-t border-wl-border px-4 py-3"
       >
         <input
           type="text"
@@ -99,19 +95,17 @@ const PoeChat = () => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message…"
           disabled={isLoading}
-          className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5
-            text-sm text-zinc-900 outline-none placeholder:text-zinc-400
-            focus:border-amber-700 focus:ring-1 focus:ring-amber-700
-            disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900
-            dark:text-zinc-100 dark:placeholder:text-zinc-500
-            dark:focus:border-amber-600 dark:focus:ring-amber-600"
+          className="flex-1 rounded-xl border border-wl-border bg-wl-surface px-4
+            py-2.5 text-sm text-wl-text outline-none placeholder:text-wl-muted
+            focus:border-wl-orange/50 focus:ring-1 focus:ring-wl-orange/50
+            disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="rounded-xl bg-amber-800 px-5 py-2.5 text-sm font-medium
-            text-amber-50 transition-colors hover:bg-amber-700
-            disabled:opacity-50 disabled:hover:bg-amber-800"
+          className="rounded-xl bg-wl-orange px-5 py-2.5 text-sm font-medium
+            text-wl-black transition-colors hover:bg-wl-orange-light
+            disabled:opacity-40 disabled:hover:bg-wl-orange"
         >
           Send
         </button>

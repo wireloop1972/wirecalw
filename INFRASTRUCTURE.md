@@ -70,7 +70,7 @@ Key settings:
 - `gateway.bind`: "lan"
 - `gateway.auth.mode`: "token" (bearer token in config)
 - `gateway.http.endpoints.chatCompletions.enabled`: true
-- `agents.defaults.model.primary`: `vercel-ai-gateway/anthropic/claude-sonnet-4.6`
+- `agents.defaults.model.primary`: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
 
 ### Environment variables (in systemd unit)
 

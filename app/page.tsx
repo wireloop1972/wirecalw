@@ -1,49 +1,69 @@
+import Image from "next/image";
 import Link from "next/link";
 import { personas, type Persona } from "@/lib/personas";
 
-const avatarColors: Record<string, string> = {
-  poe: "bg-amber-800 text-amber-50",
-  claude: "bg-indigo-700 text-indigo-50 dark:bg-indigo-600",
-  chrissie: "bg-emerald-700 text-emerald-50 dark:bg-emerald-600",
+const avatarConfig: Record<string, { image: string; ring: string }> = {
+  poe: { image: "/images/poe.png", ring: "ring-wl-orange/60" },
+  claude: { image: "/images/claude.png", ring: "ring-indigo-500/60" },
+  chrissie: { image: "/images/Chrissie.png", ring: "ring-emerald-500/60" },
 };
 
 const AssistantCard = ({ persona }: { persona: Persona }) => {
-  const initials = persona.name.slice(0, persona.name === "Chrissie" ? 2 : 1);
-  const colorClass = avatarColors[persona.id] ?? "bg-zinc-700 text-zinc-50";
+  const config = avatarConfig[persona.id];
 
   return (
     <Link
       href={persona.href}
-      className={`group flex flex-col rounded-2xl border border-zinc-200 p-6
-        transition-all hover:border-zinc-300 hover:shadow-md
-        dark:border-zinc-800 dark:hover:border-zinc-700 ${
-          !persona.available ? "opacity-60" : ""
+      className={`group relative flex flex-col rounded-xl border border-wl-border
+        bg-wl-surface p-6 transition-all duration-200
+        ${persona.available
+          ? "hover:border-wl-orange/40 hover:bg-wl-raised"
+          : "pointer-events-none opacity-40"
         }`}
     >
       <div
-        className={`flex h-12 w-12 items-center justify-center rounded-full
-          text-lg font-semibold ${colorClass}`}
+        className={`h-14 w-14 overflow-hidden rounded-full ring-2 ${
+          config?.ring ?? "ring-wl-border"
+        }`}
       >
-        {initials}
+        {config ? (
+          <Image
+            src={config.image}
+            alt={persona.name}
+            width={56}
+            height={56}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-wl-raised text-wl-muted">
+            ?
+          </div>
+        )}
       </div>
-      <h2
-        className="mt-4 text-lg font-semibold text-zinc-900
-          group-hover:text-zinc-700 dark:text-zinc-50
-          dark:group-hover:text-zinc-200"
-      >
+
+      <h2 className="mt-5 text-xl font-semibold text-wl-text">
         {persona.name}
       </h2>
-      <p className="mt-1 text-sm font-medium text-zinc-500">
+      <p className="mt-1 text-sm text-wl-orange-light">
         {persona.tagline}
       </p>
-      <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+      <p className="mt-3 text-sm leading-relaxed text-wl-muted">
         {persona.description}
       </p>
-      {!persona.available && (
+
+      {persona.available ? (
         <span
-          className="mt-4 inline-block self-start rounded-full bg-zinc-100 px-3
-            py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-800
-            dark:text-zinc-400"
+          className="mt-5 inline-flex items-center gap-1.5 self-start text-xs
+            font-medium text-wl-orange transition-colors
+            group-hover:text-wl-orange-light"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-wl-orange" />
+          Online
+        </span>
+      ) : (
+        <span
+          className="mt-5 inline-block self-start rounded-full border border-wl-border
+            px-3 py-1 text-xs text-wl-muted"
         >
           Coming soon
         </span>
@@ -52,28 +72,34 @@ const AssistantCard = ({ persona }: { persona: Persona }) => {
   );
 };
 
-const HomePage = () => {
-  return (
-    <div
-      className="flex min-h-screen flex-col items-center bg-white px-6 py-20
-        dark:bg-zinc-950"
-    >
-      <h1
-        className="text-3xl font-bold tracking-tight text-zinc-900
-          dark:text-zinc-50"
-      >
-        wireclaw
-      </h1>
-      <p className="mt-2 text-zinc-500">
-        Wire Loop Labs &mdash; AI Assistants
-      </p>
-      <div className="mt-12 grid w-full max-w-3xl gap-6 sm:grid-cols-3">
-        {personas.map((p) => (
-          <AssistantCard key={p.id} persona={p} />
-        ))}
-      </div>
+const HomePage = () => (
+  <div className="flex min-h-screen flex-col items-center bg-wl-black px-6 py-20">
+    <div className="flex items-center gap-3">
+      <div className="h-px w-8 bg-wl-orange" />
+      <span className="text-xs font-bold uppercase tracking-[0.25em] text-wl-orange">
+        Wire Loop Labs
+      </span>
+      <div className="h-px w-8 bg-wl-orange" />
     </div>
-  );
-};
+
+    <h1 className="mt-4 text-4xl font-bold tracking-tight text-wl-text">
+      AI Assistants
+    </h1>
+    <p className="mt-3 max-w-md text-center text-sm leading-relaxed text-wl-muted">
+      Your personal team of AI-powered assistants, each with their own
+      personality and expertise.
+    </p>
+
+    <div className="mt-14 grid w-full max-w-3xl gap-5 sm:grid-cols-3">
+      {personas.map((p) => (
+        <AssistantCard key={p.id} persona={p} />
+      ))}
+    </div>
+
+    <div className="mt-16 text-xs text-wl-muted/50">
+      Powered by OpenClaw &middot; Wire Loop Labs
+    </div>
+  </div>
+);
 
 export default HomePage;

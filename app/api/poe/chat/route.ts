@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { POE_SYSTEM_PROMPT } from "@/lib/personas";
-import { getPoeRuntimeMode, getOpenClawConfig } from "@/lib/poe-runtime";
+import {
+  getPoeRuntimeMode,
+  getOpenClawConfig,
+  getPaperclipConfig,
+} from "@/lib/poe-runtime";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -27,20 +31,27 @@ const getOrCreateSessionId = async (): Promise<{
   return { sessionId, isNew: true };
 };
 
-export const POST = async (request: Request) => {
-  const mode = getPoeRuntimeMode();
-
-  if (mode !== "openclaw-direct") {
-    return NextResponse.json(
-      {
-        error:
-          "Paperclip proxy mode is not yet implemented. "
-          + "Set POE_RUNTIME_MODE=openclaw-direct or remove the variable.",
-      },
-      { status: 501 },
-    );
+const withSessionCookie = (
+  res: NextResponse,
+  sessionId: string,
+  isNew: boolean,
+): NextResponse => {
+  if (isNew) {
+    res.cookies.set(SESSION_COOKIE, sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_MAX_AGE,
+      path: "/",
+    });
   }
+  return res;
+};
 
+const handleOpenClawDirect = async (
+  messages: Array<{ role: string; content: string }>,
+  sessionId: string,
+): Promise<NextResponse> => {
   const config = getOpenClawConfig();
 
   if (!config.baseUrl || !config.apiKey) {
@@ -54,6 +65,112 @@ export const POST = async (request: Request) => {
       { status: 500 },
     );
   }
+
+  const response = await fetch(
+    `${config.baseUrl}/v1/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.apiKey}`,
+        "x-openclaw-agent-id": config.agentId,
+        "x-session-key": `poe:${sessionId}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+        user: sessionId,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(
+      `OpenClaw returned ${response.status}:`,
+      errorText.slice(0, 500),
+    );
+    return NextResponse.json(
+      { error: "Portieren er dessverre utilgjengelig for oieblikket." },
+      { status: 500 },
+    );
+  }
+
+  const data = await response.json();
+  const assistantMessage =
+    data?.choices?.[0]?.message?.content
+    ?? "Jeg beklager, men jeg var ikke i stand til aa formulere et svar.";
+
+  return NextResponse.json({ assistantMessage });
+};
+
+const handlePaperclipProxy = async (
+  messages: Array<{ role: string; content: string }>,
+  sessionId: string,
+): Promise<NextResponse> => {
+  const pc = getPaperclipConfig();
+
+  if (!pc.baseUrl || !pc.apiKey || !pc.poeAgentId) {
+    console.error(
+      "Paperclip proxy not configured. Missing:",
+      [
+        !pc.baseUrl && "PAPERCLIP_BASE_URL",
+        !pc.apiKey && "PAPERCLIP_API_KEY",
+        !pc.poeAgentId && "PAPERCLIP_POE_AGENT_ID",
+      ].filter(Boolean).join(", "),
+    );
+    return NextResponse.json(
+      { error: "Paperclip proxy not configured." },
+      { status: 500 },
+    );
+  }
+
+  const pcRes = await fetch(
+    `${pc.baseUrl}/api/agents/${pc.poeAgentId}/chat`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${pc.apiKey}`,
+        "x-session-key": sessionId,
+      },
+      body: JSON.stringify({
+        messages,
+        sessionKey: sessionId,
+        metadata: {
+          source: "nextjs-poe-chat",
+          hotel: "Nevlunghavn Gjestgiveri",
+        },
+      }),
+    },
+  );
+
+  if (!pcRes.ok) {
+    const text = await pcRes.text();
+    console.error(
+      `Paperclip proxy error ${pcRes.status}:`,
+      text.slice(0, 500),
+    );
+    return NextResponse.json(
+      { error: "Portieren er dessverre utilgjengelig for oieblikket." },
+      { status: 502 },
+    );
+  }
+
+  const data = await pcRes.json();
+
+  const assistantMessage =
+    data?.assistantMessage
+    ?? data?.choices?.[0]?.message?.content
+    ?? data?.message?.content
+    ?? data?.content
+    ?? "Jeg beklager, men jeg var ikke i stand til aa formulere et svar.";
+
+  return NextResponse.json({ assistantMessage });
+};
+
+export const POST = async (request: Request) => {
+  const mode = getPoeRuntimeMode();
 
   let body: RequestBody;
   try {
@@ -86,59 +203,20 @@ export const POST = async (request: Request) => {
   );
 
   try {
-    const response = await fetch(
-      `${config.baseUrl}/v1/chat/completions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
-          "x-openclaw-agent-id": config.agentId,
-          "x-session-key": `poe:${sessionId}`,
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages,
-          user: sessionId,
-        }),
-      },
-    );
+    const result =
+      mode === "paperclip-proxy"
+        ? await handlePaperclipProxy(messages, sessionId)
+        : await handleOpenClawDirect(messages, sessionId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        `OpenClaw returned ${response.status}:`,
-        errorText.slice(0, 500),
-      );
-      return NextResponse.json(
-        { error: "Portieren er dessverre utilgjengelig for oieblikket." },
-        { status: 500 },
-      );
-    }
-
-    const data = await response.json();
-    const assistantMessage =
-      data?.choices?.[0]?.message?.content
-      ?? "Jeg beklager, men jeg var ikke i stand til aa formulere et svar.";
-
-    const res = NextResponse.json({ assistantMessage });
-
-    if (isNew) {
-      res.cookies.set(SESSION_COOKIE, sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: SESSION_MAX_AGE,
-        path: "/",
-      });
-    }
-
-    return res;
+    result.headers.set("x-poe-runtime-mode", mode);
+    return withSessionCookie(result, sessionId, isNew);
   } catch (err) {
-    console.error("OpenClaw request failed:", err);
-    return NextResponse.json(
+    console.error(`[poe/chat] ${mode} request failed:`, err);
+    const errRes = NextResponse.json(
       { error: "En uventet feil oppstod. Vennligst forsoek igjen." },
       { status: 500 },
     );
+    errRes.headers.set("x-poe-runtime-mode", mode);
+    return withSessionCookie(errRes, sessionId, isNew);
   }
 };

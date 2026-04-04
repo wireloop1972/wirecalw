@@ -1,16 +1,15 @@
 /**
  * Poe runtime configuration.
  *
- * Current architecture (2026-04-04):
- *   Browser → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Model
+ * Two runtime modes, controlled by the POE_RUNTIME_MODE env var:
  *
- * Paperclip is installed and has Portier Poe configured with an
- * openclaw_gateway adapter, but is NOT yet in the live chat path.
- * The Next.js route calls the OpenClaw HTTP chat completions
- * endpoint directly.
+ *   openclaw-direct (default):
+ *     Browser → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Model
  *
- * To add Paperclip-backed orchestration later, set the env var
- * POE_RUNTIME_MODE=paperclip-proxy and implement the proxy handler.
+ *   paperclip-proxy:
+ *     Browser → /api/poe/chat (Vercel) → Paperclip :3100 → OpenClaw :18789 → Model
+ *
+ * See docs/poe-paperclip-proxy.md for the full HTTP contract.
  */
 
 export type PoeRuntimeMode = "openclaw-direct" | "paperclip-proxy";
@@ -28,9 +27,8 @@ export const getOpenClawConfig = () => ({
   model: "openclaw",
 });
 
-// TODO: When Paperclip is ready for live chat, add:
-// export const getPaperclipConfig = () => ({
-//   baseUrl: "http://127.0.0.1:3100",
-//   agentSlug: "portier-poe",
-//   companySlug: "nevlunghavn-gjestgiveri",
-// });
+export const getPaperclipConfig = () => ({
+  baseUrl: process.env.PAPERCLIP_BASE_URL,
+  apiKey: process.env.PAPERCLIP_API_KEY,
+  poeAgentId: process.env.PAPERCLIP_POE_AGENT_ID,
+} as const);

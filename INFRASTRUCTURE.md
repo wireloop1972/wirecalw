@@ -160,15 +160,19 @@ sudo ufw status verbose
 
 Set these in Vercel (or `.env.local` for local dev):
 
-| Variable                 | Example                       | Used in            |
-|--------------------------|-------------------------------|--------------------|
-| `OPENCLAW_BASE_URL`      | `http://167.99.128.115`       | Route handlers     |
-| `OPENCLAW_GATEWAY_TOKEN` | (gateway auth token from VM)  | Route handlers     |
-| `POE_RUNTIME_MODE`       | `openclaw-direct` (default)   | Poe route handler  |
+| Variable                 | Example                         | Used in            |
+|--------------------------|---------------------------------|--------------------|
+| `OPENCLAW_BASE_URL`      | `http://167.99.128.115`         | Route handlers     |
+| `OPENCLAW_GATEWAY_TOKEN` | (gateway auth token from VM)    | Route handlers     |
+| `POE_RUNTIME_MODE`       | `openclaw-direct` (default)     | Poe route handler  |
+| `PAPERCLIP_BASE_URL`     | `http://127.0.0.1:3100`        | Poe route (proxy)  |
+| `PAPERCLIP_API_KEY`      | (server token from Paperclip)   | Poe route (proxy)  |
+| `PAPERCLIP_POE_AGENT_ID` | `24b159a0-...`                  | Poe route (proxy)  |
 
 `POE_RUNTIME_MODE` controls whether Poe chat routes through OpenClaw directly
-(`openclaw-direct`, the default) or through Paperclip (`paperclip-proxy`, not
-yet implemented). See `docs/poe-runtime-audit.md` for details.
+(`openclaw-direct`, the default) or through Paperclip (`paperclip-proxy`).
+The `PAPERCLIP_*` vars are only needed when mode is `paperclip-proxy`.
+See `docs/poe-paperclip-proxy.md` for the full HTTP contract.
 
 These are read **only** in server-side route handlers, never exposed to the client.
 

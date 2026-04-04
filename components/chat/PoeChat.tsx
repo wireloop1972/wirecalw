@@ -224,8 +224,8 @@ const PoeChat = () => {
           className="gjest-page-surface min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6"
         >
           {entries.length === 0 && !isLoading && (
-            <p className="mt-8 text-center text-sm italic text-[var(--gjest-ink-muted)]">
-              (kremter forsiktig)
+            <p className="mt-8 text-center font-display text-sm italic text-[var(--gjest-ink-muted)]">
+              Portiéren venter ved skrivebordet.
             </p>
           )}
 

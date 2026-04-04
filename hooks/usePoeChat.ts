@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 export type EntryRole = "portier" | "guest";
 
@@ -17,6 +17,8 @@ export const usePoeChat = () => {
   const [streamSettled, setStreamSettled] = useState<Record<string, boolean>>(
     {},
   );
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
 
   const onStreamDone = useCallback((id: string) => {
     setStreamSettled((s) => ({ ...s, [id]: true }));
@@ -34,9 +36,11 @@ export const usePoeChat = () => {
         text: trimmed,
       };
 
+      const currentEntries = entriesRef.current;
       const allMessages = [
-        ...entries.map((e) => ({
-          role: e.role === "guest" ? ("user" as const) : ("assistant" as const),
+        ...currentEntries.map((e) => ({
+          role:
+            e.role === "guest" ? ("user" as const) : ("assistant" as const),
           content: e.text,
         })),
         { role: "user" as const, content: trimmed },
@@ -73,7 +77,7 @@ export const usePoeChat = () => {
         setIsLoading(false);
       }
     },
-    [entries],
+    [],
   );
 
   const clearChat = useCallback(() => {

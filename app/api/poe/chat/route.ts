@@ -48,6 +48,12 @@ export const POST = async (request: Request) => {
     ...body.messages,
   ];
 
+  console.log(
+    `[poe/chat] Sending ${messages.length} messages `
+    + `(${body.messages.length} from client, 1 system). `
+    + `Roles: ${messages.map((m) => m.role).join(", ")}`,
+  );
+
   try {
     const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",

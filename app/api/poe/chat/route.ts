@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { POE_SYSTEM_PROMPT } from "@/lib/personas";
+import { POE_RUNTIME_MODE, getOpenClawConfig } from "@/lib/poe-runtime";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -11,14 +12,20 @@ interface RequestBody {
 }
 
 export const POST = async (request: Request) => {
-  const baseUrl = process.env.OPENCLAW_BASE_URL;
-  const token = process.env.OPENCLAW_GATEWAY_TOKEN;
+  if (POE_RUNTIME_MODE !== "openclaw-direct") {
+    return NextResponse.json(
+      { error: "Paperclip proxy mode is not yet implemented." },
+      { status: 501 },
+    );
+  }
 
-  if (!baseUrl || !token) {
+  const config = getOpenClawConfig();
+
+  if (!config.baseUrl || !config.token) {
     console.error(
       "Missing env vars:",
-      !baseUrl ? "OPENCLAW_BASE_URL" : "",
-      !token ? "OPENCLAW_GATEWAY_TOKEN" : "",
+      !config.baseUrl ? "OPENCLAW_BASE_URL" : "",
+      !config.token ? "OPENCLAW_GATEWAY_TOKEN" : "",
     );
     return NextResponse.json(
       { error: "Server configuration error." },
@@ -49,24 +56,27 @@ export const POST = async (request: Request) => {
   ];
 
   console.log(
-    `[poe/chat] Sending ${messages.length} messages `
-    + `(${body.messages.length} from client, 1 system). `
-    + `Roles: ${messages.map((m) => m.role).join(", ")}`,
+    `[poe/chat] mode=${POE_RUNTIME_MODE} `
+    + `msgs=${messages.length} (${body.messages.length} client + 1 system) `
+    + `roles=[${messages.map((m) => m.role).join(",")}]`,
   );
 
   try {
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-openclaw-agent-id": "main",
+    const response = await fetch(
+      `${config.baseUrl}/v1/chat/completions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.token}`,
+          "x-openclaw-agent-id": config.agentId,
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages,
+        }),
       },
-      body: JSON.stringify({
-        model: "openclaw",
-        messages,
-      }),
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

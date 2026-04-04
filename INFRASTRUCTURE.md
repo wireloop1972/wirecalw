@@ -70,7 +70,10 @@ Key settings:
 - `gateway.bind`: "lan"
 - `gateway.auth.mode`: "token" (bearer token in config)
 - `gateway.http.endpoints.chatCompletions.enabled`: true
-- `agents.defaults.model.primary`: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
+- `agents.defaults.model.primary`: `openai-codex/gpt-5.4` (OpenAI Codex via OAuth)
+- `agents.defaults.model.fallbacks`: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
+- `tools.byProvider` restricts Gemini to `minimal` profile (no tool calls)
+- `agents.defaults.heartbeat.model`: Gemini (cheap pings every 30m)
 
 ### Environment variables (in systemd unit)
 
@@ -184,6 +187,59 @@ npm run dev
 
 ---
 
+## Paperclip (AI Agent Orchestration)
+
+### Service
+
+| Field         | Value                                                    |
+|---------------|----------------------------------------------------------|
+| systemd unit  | `/etc/systemd/system/paperclip.service`                  |
+| Run as        | `neal`                                                   |
+| ExecStart     | `/usr/bin/npx paperclipai run`                           |
+| Port          | `127.0.0.1:3100` (localhost only, no Caddy exposure yet) |
+| Version       | 2026.325.0                                               |
+| Deployment    | `local_trusted` (private)                                |
+| Database      | Embedded PostgreSQL (port 54329, data in `~/.paperclip/instances/default/db`) |
+
+### Common commands
+
+```bash
+sudo systemctl status paperclip --no-pager
+sudo systemctl restart paperclip
+journalctl -u paperclip --no-pager -n 50
+
+curl -sS http://127.0.0.1:3100/api/health
+```
+
+### Company & Agent
+
+| Entity                    | Value                                          |
+|---------------------------|-------------------------------------------------|
+| Company                   | Nevlunghavn Gjestgiveri (`NEV`)                |
+| Company ID                | `54cdb0a4-7810-46ad-bd0d-895d630bb698`         |
+| Agent                     | Portier Poe                                    |
+| Agent ID                  | `24b159a0-493f-4ee8-9566-08a69edc18a3`         |
+| Adapter                   | `openclaw_gateway`                             |
+| Gateway URL               | `ws://127.0.0.1:18789`                         |
+| Session strategy          | `project`                                      |
+
+### Configuration files
+
+| Path                                                | Purpose                    |
+|-----------------------------------------------------|----------------------------|
+| `~/.paperclip/instances/default/config.json`        | Paperclip server config    |
+| `~/.paperclip/instances/default/.env`               | Agent JWT secret           |
+| `~/.paperclip/instances/default/logs/server.log`    | Server log                 |
+| `~/.paperclip/instances/default/secrets/master.key` | Encryption master key      |
+
+### Known issues (v2026.325.0)
+
+- `PATCH /api/agents/{id}` returns 500 (route likely missing in this version)
+- `DELETE /api/companies/{id}` fails with FK constraint on `company_skills`
+- Adapter config changes require direct DB update (user `paperclip`, pass `paperclip`, port 54329)
+
+---
+
 ## TODO / Future work
 
 - [ ] Add custom domain + HTTPS (Caddy auto-TLS)
@@ -192,3 +248,6 @@ npm run dev
 - [ ] Add authentication (Clerk or similar)
 - [ ] Move AI_GATEWAY_API_KEY to OIDC/token-based auth
 - [ ] Add database for conversation persistence
+- [ ] Expose Paperclip UI via Caddy (when ready for external access)
+- [ ] Enable Portier Poe heartbeat once OpenClaw wiring is verified end-to-end
+- [ ] Upgrade Paperclip when PATCH /api/agents is fixed

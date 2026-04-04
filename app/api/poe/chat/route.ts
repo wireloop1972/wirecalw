@@ -21,7 +21,7 @@ export const POST = async (request: Request) => {
       !token ? "OPENCLAW_GATEWAY_TOKEN" : "",
     );
     return NextResponse.json(
-      { error: "Server configuration error. Please contact the administrator." },
+      { error: "Server configuration error." },
       { status: 500 },
     );
   }
@@ -69,20 +69,21 @@ export const POST = async (request: Request) => {
         errorText.slice(0, 500),
       );
       return NextResponse.json(
-        { error: "Failed to get a response from the assistant." },
+        { error: "Portieren er dessverre utilgjengelig for oieblikket." },
         { status: 500 },
       );
     }
 
     const data = await response.json();
     const assistantMessage =
-      data?.choices?.[0]?.message?.content ?? "I was unable to formulate a reply.";
+      data?.choices?.[0]?.message?.content
+      ?? "Jeg beklager, men jeg var ikke i stand til aa formulere et svar.";
 
     return NextResponse.json({ assistantMessage });
   } catch (err) {
     console.error("OpenClaw request failed:", err);
     return NextResponse.json(
-      { error: "An unexpected error occurred while contacting the assistant." },
+      { error: "En uventet feil oppstod. Vennligst forsoek igjen." },
       { status: 500 },
     );
   }

@@ -3,33 +3,20 @@ import Link from "next/link";
 import PoeChat from "@/components/chat/PoeChat";
 
 const PoePage = () => (
-  <div className="flex h-screen flex-col bg-wl-black">
-    <header
-      className="flex items-center justify-between border-b
-        border-wl-border px-6 py-4"
-    >
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 overflow-hidden rounded-full ring-2 ring-wl-orange/60">
+  <div className="gjest-page flex h-dvh flex-col">
+    <header className="gjest-header shrink-0 border-b border-[var(--gjest-border)]">
+      <Link href="/" className="block">
+        <div className="relative w-full overflow-hidden bg-[#0a0b0b]">
           <Image
-            src="/images/poe.png"
-            alt="Poe"
-            width={36}
-            height={36}
-            className="h-full w-full object-cover"
+            src="/images/gjestgiveri-header.png"
+            alt="Nevlunghavn Gjestgiveri"
+            width={1200}
+            height={400}
+            priority
+            className="h-auto w-full object-contain"
+            sizes="100vw"
           />
         </div>
-        <div>
-          <h1 className="text-lg font-semibold text-wl-text">Poe</h1>
-          <p className="text-xs text-wl-muted">
-            Your Victorian gentleman&apos;s gentleman
-          </p>
-        </div>
-      </div>
-      <Link
-        href="/"
-        className="text-sm text-wl-muted transition-colors hover:text-wl-orange"
-      >
-        &larr; Back
       </Link>
     </header>
     <PoeChat />

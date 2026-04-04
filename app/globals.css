@@ -26,6 +26,8 @@
   --color-wl-muted: var(--wl-text-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-libre-baskerville), "Libre Baskerville", Georgia,
+    serif;
 }
 
 body {
@@ -34,7 +36,347 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-::selection {
-  background: var(--wl-orange);
-  color: var(--wl-black);
+.font-display {
+  font-family: var(--font-libre-baskerville), "Libre Baskerville", Georgia,
+    serif;
+}
+
+/* --- Gjestgiveriet / Poe: 1920s seaside hotel --- */
+
+.gjest-page {
+  --gjest-ink: #1a2832;
+  --gjest-ink-muted: #4a5d6a;
+  --gjest-brass: #5a7a8c;
+  --gjest-brass-deep: #3d5a6a;
+  --gjest-border: rgba(61, 90, 106, 0.35);
+  --gjest-shell: #e8eef2;
+  --gjest-paper: #f2efe6;
+  --gjest-paper-edge: #e4dfd3;
+  background: linear-gradient(165deg, #dfe8ee 0%, #c9d4dc 42%, #b8c5ce 100%);
+  color: var(--gjest-ink);
+}
+
+.gjest-header {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    transparent 100%
+  );
+}
+
+.gjest-leather-shell {
+  border-radius: 3px;
+  border: 1px solid rgba(61, 90, 106, 0.25);
+  background: linear-gradient(145deg, #4a5f6e 0%, #3a4d59 48%, #2f3f49 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 28px rgba(26, 40, 50, 0.25);
+}
+
+.gjest-page-surface {
+  background-color: var(--gjest-paper);
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(90, 122, 140, 0.07) 0%,
+      transparent 10%,
+      transparent 90%,
+      rgba(90, 122, 140, 0.07) 100%
+    ),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.gjest-inscription-band {
+  background: linear-gradient(180deg, #e8e4da 0%, #dcd6c8 100%);
+  border-top: 1px solid rgba(61, 90, 106, 0.25);
+}
+
+.gjest-inscription-input {
+  border: none;
+  border-bottom: 2px solid var(--gjest-brass-deep);
+  background: transparent;
+  padding: 0.5rem 0.25rem;
+  font-size: 1rem;
+  color: var(--gjest-ink);
+  outline: none;
+}
+
+.gjest-inscription-input::placeholder {
+  color: rgba(74, 93, 106, 0.45);
+}
+
+.gjest-inscription-input:focus {
+  border-bottom-color: var(--gjest-brass);
+}
+
+.gjest-seal-btn {
+  color: #1a2832;
+  background: linear-gradient(
+    180deg,
+    #8fb0b8 0%,
+    var(--gjest-brass) 45%,
+    var(--gjest-brass-deep) 100%
+  );
+  border: 1px solid var(--gjest-brass-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 2px 6px rgba(26, 40, 50, 0.2);
+}
+
+.gjest-seal-btn:hover {
+  filter: brightness(1.05);
+}
+
+.gjest-seal-btn:disabled {
+  opacity: 0.35;
+  filter: none;
+  cursor: default;
+}
+
+/* Narrator / Portier lane */
+
+.gjest-lane-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gjest-brass-deep);
+}
+
+.gjest-narrator-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.gjest-narrator-body {
+  font-family: var(--font-libre-baskerville), "Libre Baskerville", Georgia,
+    serif;
+  font-size: 1rem;
+  line-height: 1.68;
+  max-width: 42rem;
+  color: var(--gjest-ink);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.gjest-lane-narrator {
+  border-bottom: 1px solid rgba(90, 122, 140, 0.2);
+  padding-bottom: 1rem;
+}
+
+.gjest-lane-narrator--streaming .gjest-narrator-body {
+  text-shadow: 0 0 0 rgba(26, 40, 50, 0.08);
+}
+
+.gjest-drop-cap {
+  float: left;
+  margin-right: 0.35rem;
+  margin-top: 0.15rem;
+  font-size: 2.75rem;
+  line-height: 0.75;
+  color: var(--gjest-ink);
+  font-family: var(--font-libre-baskerville), "Libre Baskerville", Georgia,
+    serif;
+}
+
+/* Guest lane */
+
+.gjest-guest-lane {
+  border-left: 3px solid var(--gjest-brass);
+  padding: 0.5rem 0 0.5rem 0.75rem;
+  margin-left: 0.125rem;
+  background: linear-gradient(
+    90deg,
+    rgba(90, 122, 140, 0.12) 0%,
+    transparent 72%
+  );
+}
+
+.gjest-guest-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 42rem;
+  color: var(--gjest-ink);
+}
+
+/* Ink cursor (blinking nib) */
+
+.gjest-ink-cursor {
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-left: 1px;
+  width: 0;
+  height: 1em;
+  position: relative;
+}
+
+.gjest-ink-cursor__nib {
+  position: absolute;
+  left: 0;
+  bottom: 0.1em;
+  width: 2px;
+  height: 0.85em;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 40, 50, 0.15) 0%,
+    var(--gjest-ink) 35%,
+    var(--gjest-ink) 100%
+  );
+  border-radius: 1px;
+  animation: gjest-cursor-blink 0.95s step-end infinite;
+  box-shadow: 0 0 4px rgba(26, 40, 50, 0.25);
+}
+
+@keyframes gjest-cursor-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.gjest-ink-fresh {
+  display: inline;
+  animation: gjest-ink-settle 0.42s ease-out;
+  text-shadow:
+    0 0 8px rgba(26, 40, 50, 0.2),
+    0 0 1px rgba(26, 40, 50, 0.35);
+}
+
+@keyframes gjest-ink-settle {
+  0% {
+    opacity: 0.35;
+    filter: blur(0.35px);
+    color: #1a3040;
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    color: var(--gjest-ink);
+  }
+}
+
+/* Quill pulse (streaming indicator) */
+
+.gjest-quill-pulse {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #7a9eae, #3d5a6a);
+  box-shadow: 0 0 6px rgba(90, 122, 140, 0.45);
+  animation: gjest-quill-breathe 1.1s ease-in-out infinite;
+}
+
+@keyframes gjest-quill-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* Queued narrator placeholder */
+
+.gjest-narrator-queued {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.5rem 0 1rem;
+  opacity: 0.45;
+}
+
+.gjest-queued-line {
+  display: block;
+  height: 0.45rem;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(90, 122, 140, 0.35) 0%,
+    rgba(90, 122, 140, 0.12) 55%,
+    transparent 100%
+  );
+  animation: gjest-queued-shimmer 2.2s ease-in-out infinite;
+}
+
+.gjest-queued-line--short {
+  width: 58%;
+}
+
+.gjest-queued-line:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.gjest-queued-line:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes gjest-queued-shimmer {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+/* Narrator waiting text */
+
+.gjest-narrator-waiting {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: rgba(74, 93, 106, 0.55);
+}
+
+/* Hint text */
+
+.gjest-hint {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--gjest-ink-muted);
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .gjest-seal-btn:hover {
+    filter: none;
+  }
+
+  .gjest-ink-fresh,
+  .gjest-ink-cursor__nib,
+  .gjest-quill-pulse,
+  .gjest-queued-line {
+    animation: none !important;
+  }
+
+  .gjest-ink-fresh {
+    filter: none;
+    opacity: 1;
+    text-shadow: none;
+  }
+}
+
+/* Selection in gjest-page */
+
+.gjest-page ::selection {
+  background: var(--gjest-brass);
+  color: #fff;
+}
+
+@media (min-width: 640px) {
+  .gjest-leather-shell {
+    margin: 0.75rem 1rem 1rem;
+  }
 }

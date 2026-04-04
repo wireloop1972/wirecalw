@@ -2,58 +2,94 @@
 
 import { useState, useCallback } from "react";
 
-export interface Message {
-  role: "user" | "assistant";
-  content: string;
+export type EntryRole = "portier" | "guest";
+
+export interface ChatEntry {
+  id: string;
+  role: EntryRole;
+  text: string;
 }
 
 export const usePoeChat = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [streamSettled, setStreamSettled] = useState<Record<string, boolean>>(
+    {},
+  );
 
-  const sendMessage = useCallback(async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const userMessage: Message = { role: "user", content: trimmed };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/poe/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
-        return;
-      }
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.assistantMessage,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch {
-      setError("Failed to reach the server. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [messages]);
-
-  const clearChat = useCallback(() => {
-    setMessages([]);
-    setError(null);
+  const onStreamDone = useCallback((id: string) => {
+    setStreamSettled((s) => ({ ...s, [id]: true }));
   }, []);
 
-  return { messages, sendMessage, isLoading, error, clearChat };
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      const guestId = `g-${Date.now()}`;
+      const guestEntry: ChatEntry = {
+        id: guestId,
+        role: "guest",
+        text: trimmed,
+      };
+
+      const allMessages = [
+        ...entries.map((e) => ({
+          role: e.role === "guest" ? ("user" as const) : ("assistant" as const),
+          content: e.text,
+        })),
+        { role: "user" as const, content: trimmed },
+      ];
+
+      setEntries((prev) => [...prev, guestEntry]);
+      setStreamSettled((s) => ({ ...s, [guestId]: true }));
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch("/api/poe/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: allMessages }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.error ?? "Noe gikk galt.");
+          setIsLoading(false);
+          return;
+        }
+
+        const portierId = `p-${Date.now()}`;
+        setEntries((prev) => [
+          ...prev,
+          { id: portierId, role: "portier", text: data.assistantMessage },
+        ]);
+        setIsLoading(false);
+      } catch {
+        setError("Kunne ikke naa tjeneren. Vennligst forsoek igjen.");
+        setIsLoading(false);
+      }
+    },
+    [entries],
+  );
+
+  const clearChat = useCallback(() => {
+    setEntries([]);
+    setStreamSettled({});
+    setError(null);
+    setIsLoading(false);
+  }, []);
+
+  return {
+    entries,
+    streamSettled,
+    onStreamDone,
+    sendMessage,
+    isLoading,
+    error,
+    clearChat,
+  };
 };

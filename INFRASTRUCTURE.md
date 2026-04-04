@@ -110,21 +110,26 @@ curl http://127.0.0.1:18789/global/health
 | Field       | Value                                  |
 |-------------|----------------------------------------|
 | Config      | `/etc/caddy/Caddyfile`                 |
-| Listens     | `:80` (HTTP only, no TLS yet)          |
-| Proxies to  | `127.0.0.1:18789`                      |
-| Logs        | `/var/log/caddy/openclaw.log`          |
+
+### Site blocks
+
+| Host                        | Backend              | TLS  | Logs                                |
+|-----------------------------|----------------------|------|-------------------------------------|
+| `:80` (default)             | `127.0.0.1:18789`    | No   | `/var/log/caddy/openclaw.log`       |
+| `paperclip.wireloop.ai`     | `127.0.0.1:3100`     | Auto | `/var/log/caddy/paperclip-access.log` |
 
 ### Common commands
 
 ```bash
 sudo systemctl status caddy --no-pager
-sudo systemctl restart caddy
+sudo systemctl reload caddy
 ```
 
 ### Features
 
-- gzip encoding
-- WebSocket upgrade support
+- Automatic TLS for `paperclip.wireloop.ai` (Let's Encrypt via Caddy)
+- gzip encoding (`:80` block)
+- WebSocket upgrade support (`:80` block)
 - Security headers: X-Frame-Options, Referrer-Policy, X-Content-Type-Options
 - Request logging with rotation (10 MB, keep 5)
 
@@ -136,7 +141,9 @@ sudo systemctl restart caddy
 |-------|-------------|
 | 22    | Allow (SSH) |
 | 80    | Allow (HTTP via Caddy) |
+| 443   | Allow (HTTPS via Caddy — paperclip.wireloop.ai) |
 | 18789 | Deny (OpenClaw direct — localhost only) |
+| 3100  | Deny (Paperclip direct — localhost only) |
 
 ```bash
 sudo ufw status verbose
@@ -205,8 +212,9 @@ npm run dev
 | systemd unit  | `/etc/systemd/system/paperclip.service`                  |
 | Run as        | `neal`                                                   |
 | ExecStart     | `/usr/bin/npx paperclipai run`                           |
-| Port          | `127.0.0.1:3100` (localhost only, no Caddy exposure yet) |
-| Version       | 2026.325.0                                               |
+| Port          | `127.0.0.1:3100` (exposed via Caddy at `paperclip.wireloop.ai`) |
+| External URL  | `https://paperclip.wireloop.ai`                          |
+| Version       | 2026.403.0                                               |
 | Deployment    | `local_trusted` (private)                                |
 | Database      | Embedded PostgreSQL (port 54329, data in `~/.paperclip/instances/default/db`) |
 
@@ -231,6 +239,8 @@ curl -sS http://127.0.0.1:3100/api/health
 | Adapter                   | `openclaw_gateway`                             |
 | Gateway URL               | `ws://127.0.0.1:18789`                         |
 | Session strategy          | `project`                                      |
+| API key ID                | `c0fc49ad-a5d3-43f1-961d-aa6fee3ff34f`         |
+| API key prefix            | `pcp_fd6a...`                                  |
 
 ### Configuration files
 
@@ -251,7 +261,7 @@ curl -sS http://127.0.0.1:3100/api/health
 
 ## TODO / Future work
 
-- [ ] Add custom domain + HTTPS (Caddy auto-TLS)
+- [x] Add custom domain + HTTPS (Caddy auto-TLS) — `paperclip.wireloop.ai`
 - [ ] Connect repo to Vercel project
 - [ ] Implement Claude and Chrissie personas
 - [ ] Add authentication (Clerk or similar)

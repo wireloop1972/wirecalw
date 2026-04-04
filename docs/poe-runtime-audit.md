@@ -122,52 +122,34 @@ Memory: 0 files · 0 chunks · sources memory · plugin memory-core · vector un
 
 ## Model in Use
 
-All recent sessions show `google/gemini-3.1-flash-lite-preview` (the fallback),
-not `openai-codex/gpt-5.4` (the configured primary). This indicates the OpenAI
-Codex OAuth token has expired, causing silent fallback to Gemini.
+**Resolved 2026-04-04.** OpenAI Codex OAuth was re-authenticated. GPT-5.4 is now
+active as the primary model. Test request confirmed a successful response from
+GPT-5.4 (session 93 created, response received in ~6s).
+
+Prior to re-auth, all sessions were silently falling back to
+`google/gemini-3.1-flash-lite-preview` due to an expired OAuth token.
 
 Config from `~/.openclaw/openclaw.json`:
-- Primary: `openai-codex/gpt-5.4`
+- Primary: `openai-codex/gpt-5.4` (active, authenticated)
 - Fallback: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
-
-`openclaw models list` output:
-```
-Model                                      Input      Ctx      Local Auth  Tags
-openai-codex/gpt-5.4                       text+image 266k     no    yes   default,configured,alias:codex
-vercel-ai-gateway/google/gemini-3.1-fla... text+image 977k     no    no    fallback#1,configured,alias:gflash
-```
-
-**Action required:** Re-authenticate Codex OAuth interactively. See
-**Manual Steps** below.
 
 ---
 
 ## Paperclip PostgreSQL Status
 
-**Diagnosis (2026-04-04):**
+**Resolved 2026-04-04.** Service restarted (`sudo systemctl restart paperclip`).
+Fresh PostgreSQL shared memory segments created in `/dev/shm/`. All services
+started cleanly: plugin-job-scheduler, plugin-job-coordinator, plugin-loader,
+automatic database backups (60m interval, 30d retention). Version upgraded to
+2026.403.0 from 2026.325.0 on restart.
 
-The embedded PostgreSQL (port 54329) has lost its POSIX shared memory segment.
-The process is running but all DB operations fail with:
+Health check: `{"status":"ok","version":"2026.403.0","deploymentMode":"local_trusted"}`
 
-```
-FATAL: could not open shared memory segment "/PostgreSQL.1535214680": No such file or directory
-(code 58P01, file dsm_impl.c:266, routine dsm_impl_posix)
-```
-
-This causes cascading failures in:
-- `plugin-job-scheduler` (scheduler tick error)
-- `heartbeat timer tick`
-- `routine scheduler tick`
-- `periodic heartbeat recovery`
-
-**System resources are fine:**
-- `/dev/shm`: 2.0G total, 1.1M used (99.9% free)
-- `kernel.shmmax`: 18446744073692774399 (unlimited)
-- `kernel.shmall`: 18446744073692774399 (unlimited)
-
-The issue is that the shared memory segment was cleaned up (likely by a reboot
-or tmpfs cleanup) while the PostgreSQL process was still running. The fix is a
-clean service restart, which requires `sudo`. See **Manual Steps** below.
+**Root cause:** The embedded PostgreSQL (port 54329) had lost its POSIX shared
+memory segment `/PostgreSQL.1535214680` from `/dev/shm/` (likely cleaned by
+tmpfs during a prior reboot) while the process was still running. All DB
+operations failed with code 58P01. System resources were not the issue
+(`/dev/shm` had 2GB free, kernel shmmax/shmall unlimited).
 
 ---
 
@@ -199,7 +181,7 @@ by the current live chat path.
 | Session cookie        | `poe_sid`, 30-day `httpOnly`        | Yes (identity)     |
 | OpenClaw sessions     | Stable key via `x-session-key`      | Yes (monitoring)   |
 | OpenClaw memory       | Enabled, 0 files/chunks             | No                 |
-| Paperclip             | Running (DB errors, needs restart)  | No                 |
+| Paperclip             | Running, healthy (v2026.403.0)      | No                 |
 | Paperclip Portier Poe | Configured, `openclaw_gateway`      | No                 |
 
 ---
@@ -230,47 +212,9 @@ by the current live chat path.
 
 ---
 
-## Manual Steps Required
-
-These steps require an interactive terminal on the Ubuntu server
-(`ssh neal@167.99.128.115`, then `tmux attach -t ops`):
-
-### 1. Restart Paperclip (fix PostgreSQL shared memory)
-
-```bash
-sudo systemctl restart paperclip
-sleep 5
-systemctl status paperclip --no-pager
-curl -sS http://127.0.0.1:3100/api/health
-journalctl -u paperclip -n 20 --no-pager
-```
-
-Verify: health returns `{"status":"ok"}` and no `58P01` errors in logs.
-
-### 2. Re-authenticate OpenAI Codex OAuth
-
-```bash
-openclaw models auth login --provider openai-codex
-```
-
-This opens an interactive OAuth flow. Follow the URL in a browser, authorize,
-and return to the terminal. Then verify:
-
-```bash
-openclaw models list
-openclaw status
-```
-
-Verify: sessions start using `openai-codex/gpt-5.4` instead of the Gemini
-fallback.
-
----
-
 ## Recommendations for Next Steps
 
-1. **Complete manual steps above** — Codex re-auth and Paperclip restart.
-
-2. **Clean up OpenClaw sessions** — 92+ orphaned sessions accumulate from
+1. **Clean up OpenClaw sessions** — 92+ orphaned sessions accumulate from
    previous stateless HTTP requests. These can be pruned or ignored.
 
 3. **Add persistent conversation storage** — When ready, store conversations

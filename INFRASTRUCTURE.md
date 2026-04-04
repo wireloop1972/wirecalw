@@ -164,6 +164,11 @@ Set these in Vercel (or `.env.local` for local dev):
 |--------------------------|-------------------------------|--------------------|
 | `OPENCLAW_BASE_URL`      | `http://167.99.128.115`       | Route handlers     |
 | `OPENCLAW_GATEWAY_TOKEN` | (gateway auth token from VM)  | Route handlers     |
+| `POE_RUNTIME_MODE`       | `openclaw-direct` (default)   | Poe route handler  |
+
+`POE_RUNTIME_MODE` controls whether Poe chat routes through OpenClaw directly
+(`openclaw-direct`, the default) or through Paperclip (`paperclip-proxy`, not
+yet implemented). See `docs/poe-runtime-audit.md` for details.
 
 These are read **only** in server-side route handlers, never exposed to the client.
 

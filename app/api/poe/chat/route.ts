@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { POE_SYSTEM_PROMPT } from "@/lib/personas";
-import { POE_RUNTIME_MODE, getOpenClawConfig } from "@/lib/poe-runtime";
+import { getPoeRuntimeMode, getOpenClawConfig } from "@/lib/poe-runtime";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -11,21 +12,42 @@ interface RequestBody {
   messages: ChatMessage[];
 }
 
+const SESSION_COOKIE = "poe_sid";
+const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+const getOrCreateSessionId = async (): Promise<{
+  sessionId: string;
+  isNew: boolean;
+}> => {
+  const jar = await cookies();
+  const existing = jar.get(SESSION_COOKIE)?.value;
+  if (existing) return { sessionId: existing, isNew: false };
+
+  const sessionId = `poe-${crypto.randomUUID()}`;
+  return { sessionId, isNew: true };
+};
+
 export const POST = async (request: Request) => {
-  if (POE_RUNTIME_MODE !== "openclaw-direct") {
+  const mode = getPoeRuntimeMode();
+
+  if (mode !== "openclaw-direct") {
     return NextResponse.json(
-      { error: "Paperclip proxy mode is not yet implemented." },
+      {
+        error:
+          "Paperclip proxy mode is not yet implemented. "
+          + "Set POE_RUNTIME_MODE=openclaw-direct or remove the variable.",
+      },
       { status: 501 },
     );
   }
 
   const config = getOpenClawConfig();
 
-  if (!config.baseUrl || !config.token) {
+  if (!config.baseUrl || !config.apiKey) {
     console.error(
       "Missing env vars:",
       !config.baseUrl ? "OPENCLAW_BASE_URL" : "",
-      !config.token ? "OPENCLAW_GATEWAY_TOKEN" : "",
+      !config.apiKey ? "OPENCLAW_GATEWAY_TOKEN" : "",
     );
     return NextResponse.json(
       { error: "Server configuration error." },
@@ -50,13 +72,15 @@ export const POST = async (request: Request) => {
     );
   }
 
+  const { sessionId, isNew } = await getOrCreateSessionId();
+
   const messages = [
     { role: "system" as const, content: POE_SYSTEM_PROMPT },
     ...body.messages,
   ];
 
   console.log(
-    `[poe/chat] mode=${POE_RUNTIME_MODE} `
+    `[poe/chat] mode=${mode} session=${sessionId}${isNew ? " (new)" : ""} `
     + `msgs=${messages.length} (${body.messages.length} client + 1 system) `
     + `roles=[${messages.map((m) => m.role).join(",")}]`,
   );
@@ -68,12 +92,14 @@ export const POST = async (request: Request) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${config.token}`,
+          Authorization: `Bearer ${config.apiKey}`,
           "x-openclaw-agent-id": config.agentId,
+          "x-session-key": `poe:${sessionId}`,
         },
         body: JSON.stringify({
           model: config.model,
           messages,
+          user: sessionId,
         }),
       },
     );
@@ -95,7 +121,19 @@ export const POST = async (request: Request) => {
       data?.choices?.[0]?.message?.content
       ?? "Jeg beklager, men jeg var ikke i stand til aa formulere et svar.";
 
-    return NextResponse.json({ assistantMessage });
+    const res = NextResponse.json({ assistantMessage });
+
+    if (isNew) {
+      res.cookies.set(SESSION_COOKIE, sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_MAX_AGE,
+        path: "/",
+      });
+    }
+
+    return res;
   } catch (err) {
     console.error("OpenClaw request failed:", err);
     return NextResponse.json(

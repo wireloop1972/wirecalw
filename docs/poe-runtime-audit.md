@@ -10,7 +10,7 @@ Paperclip, OpenClaw session persistence, or memory features are in use.
 ## Current Request Path
 
 ```
-Browser (React state) → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Model
+Browser (React state) → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Vercel AI Gateway → Mistral Large 3
 ```
 
 The Next.js route (`app/api/poe/chat/route.ts`) calls OpenClaw's
@@ -19,8 +19,8 @@ The Next.js route (`app/api/poe/chat/route.ts`) calls OpenClaw's
 - `Authorization: Bearer <token>` (gateway token)
 - `x-openclaw-agent-id: main` (the default agent)
 - `x-session-key: poe:<session-id>` (stable per-browser session, cookie-backed)
-- `model: "openclaw"` (OpenClaw resolves to configured primary/fallback)
-- `user: <session-id>` (OpenAI-standard user field for session tracking)
+- `model: "openclaw"` (OpenClaw resolves to `vercel-ai-gateway/mistral/mistral-medium`)
+- `user: <session-id>` (standard user field for session tracking)
 - Full message array: `[system_prompt, ...client_history]`
 
 No Paperclip API is called anywhere in the application.
@@ -33,13 +33,12 @@ The Poe runtime mode is controlled by the `POE_RUNTIME_MODE` env var:
 
 - **`openclaw-direct`** (default): Next.js calls OpenClaw directly.
   This is the current production mode.
-- **`paperclip-proxy`**: Would route through Paperclip's agent runtime.
-  **Not yet implemented.** Setting this value will intentionally return
-  HTTP 501 until the proxy handler is added.
+- **`paperclip-proxy`**: Routes through Paperclip's agent runtime.
+  The handler is implemented but Paperclip is intended for **async admin
+  operations** (routines, issues, heartbeats), not live guest chat.
 
-As of now, `POE_RUNTIME_MODE` must remain `openclaw-direct` (or be unset).
-Changing it to `paperclip-proxy` will intentionally return HTTP 501 until
-the proxy implementation is added.
+`POE_RUNTIME_MODE` should remain `openclaw-direct` (or be unset) for
+production. The proxy mode exists for testing and future use cases only.
 
 The mode is read from the environment via `getPoeRuntimeMode()` in
 `lib/poe-runtime.ts` — no code change needed to switch modes, just set the
@@ -122,16 +121,27 @@ Memory: 0 files · 0 chunks · sources memory · plugin memory-core · vector un
 
 ## Model in Use
 
-**Resolved 2026-04-04.** OpenAI Codex OAuth was re-authenticated. GPT-5.4 is now
-active as the primary model. Test request confirmed a successful response from
-GPT-5.4 (session 93 created, response received in ~6s).
-
-Prior to re-auth, all sessions were silently falling back to
-`google/gemini-3.1-flash-lite-preview` due to an expired OAuth token.
+**Updated 2026-04-05.** OpenAI Codex and Gemini have been removed. All models
+are now Mistral, accessed through the Vercel AI Gateway (`AI_GATEWAY_API_KEY`).
+OpenClaw upgraded to v2026.4.2.
 
 Config from `~/.openclaw/openclaw.json`:
-- Primary: `openai-codex/gpt-5.4` (active, authenticated)
-- Fallback: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
+- Primary: `vercel-ai-gateway/mistral/mistral-medium` (substitute for Large 3)
+- Aliases: `poe` (Medium), `small` (Mistral Small), `dev` (Devstral 2)
+- Heartbeat: `vercel-ai-gateway/mistral/mistral-small`
+- No fallback models configured
+
+Note: `mistral-large-3` is the target primary model but is not yet in
+OpenClaw's static Vercel AI Gateway catalog. See `docs/models.md` for the
+full substitution details and retest criteria.
+
+See `docs/models.md` for the full model policy and routing rules.
+
+### Previous models (historical)
+
+- `openai-codex/gpt-5.4` was active 2026-04-04 to 2026-04-05 (OAuth).
+- `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview` was the fallback
+  via Vercel AI Gateway. Removed as part of the Mistral migration.
 
 ---
 
@@ -156,10 +166,9 @@ operations failed with code 58P01. System resources were not the issue
 ## Tools
 
 No tools are enabled in the chat route. The request body contains only `model`,
-`messages`, and `user`. OpenClaw's tool profiles (`coding` for primary,
-`minimal` for Gemini) are configured server-side but only apply when the gateway
-itself invokes tools for its own agent sessions, not for passthrough HTTP
-completions.
+`messages`, and `user`. OpenClaw's tool profiles are configured server-side but
+only apply when the gateway itself invokes tools for its own agent sessions, not
+for passthrough HTTP completions.
 
 ---
 
@@ -221,7 +230,7 @@ by the current live chat path.
    in Supabase so they survive page refreshes. Independent of
    OpenClaw/Paperclip.
 
-4. **Paperclip integration** — When Paperclip's DB is stable, set
-   `POE_RUNTIME_MODE=paperclip-proxy` and implement the proxy handler. This
-   would enable Paperclip's orchestration, tools, routines, and memory for
-   Poe, while keeping OpenClaw as the LLM backend.
+4. **Paperclip routines** — Paperclip is healthy (v2026.403.0) and configured
+   for async admin operations. See `docs/paperclip-routines.md` for the
+   first routine set (morning briefing, inbox triage, weekly review, analytics,
+   health checks). Live guest chat stays on `openclaw-direct`.

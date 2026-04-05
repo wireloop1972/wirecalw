@@ -1,7 +1,7 @@
 # Poe → Paperclip Proxy: HTTP Contract
 
-**Status:** Design spec only — not yet active.
-**Date:** 2026-04-04
+**Status:** Design spec — not the intended production mode for live guest chat.
+**Date:** 2026-04-04 (updated 2026-04-05)
 
 ---
 
@@ -17,7 +17,7 @@ adapter).
 Browser → /api/poe/chat (Vercel)
        → Paperclip :3100 (agent runtime)
        → OpenClaw :18789 (LLM gateway)
-       → openai-codex/gpt-5.4
+       → Vercel AI Gateway → Mistral Medium (target: Large 3)
 ```
 
 ---
@@ -120,9 +120,12 @@ route structure.
 
 ## Transition Plan
 
-1. **Current state**: `openclaw-direct` — all Poe traffic goes to OpenClaw.
-2. **Testing**: Set `POE_RUNTIME_MODE=paperclip-proxy` in a preview/staging
-   environment. Verify Paperclip logs show agent activity.
-3. **Production flip**: Set the env var in the production Vercel environment.
+1. **Current state**: `openclaw-direct` — all live Poe chat goes to OpenClaw
+   (now routing to Mistral Medium). This is the intended production mode.
+2. **Paperclip role**: Paperclip is the async task engine for hotel admin
+   operations (routines, issues, heartbeats). It is **not** intended as a
+   live-chat proxy for guest-facing conversations.
+3. **If proxy is ever needed**: Set `POE_RUNTIME_MODE=paperclip-proxy` in a
+   preview environment and verify Paperclip logs show agent activity.
 4. **Rollback**: Unset or change `POE_RUNTIME_MODE` to `openclaw-direct`.
    No code deploy needed.

@@ -25,6 +25,7 @@ export const getOpenClawConfig = () => ({
   apiKey: process.env.OPENCLAW_API_KEY ?? process.env.OPENCLAW_GATEWAY_TOKEN,
   agentId: "main",
   model: "openclaw",
+  oidcToken: process.env.VERCEL_OIDC_TOKEN,
 });
 
 export const getPaperclipConfig = () => ({

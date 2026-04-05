@@ -66,16 +66,21 @@ const handleOpenClawDirect = async (
     );
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${config.apiKey}`,
+    "x-openclaw-agent-id": config.agentId,
+    "x-session-key": `poe:${sessionId}`,
+  };
+  if (config.oidcToken) {
+    headers["x-vercel-oidc-token"] = config.oidcToken;
+  }
+
   const response = await fetch(
     `${config.baseUrl}/v1/chat/completions`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-        "x-openclaw-agent-id": config.agentId,
-        "x-session-key": `poe:${sessionId}`,
-      },
+      headers,
       body: JSON.stringify({
         model: config.model,
         messages,

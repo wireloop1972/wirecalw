@@ -6,7 +6,7 @@ wireclaw is the Next.js frontend for Wire Loop Labs AI assistants. It connects t
 an OpenClaw gateway running on a DigitalOcean VM via Caddy reverse proxy.
 
 ```
-Browser → Vercel (Next.js) → DigitalOcean VM (Caddy :80 → OpenClaw :18789) → Vercel AI Gateway → Claude
+Browser → Vercel (Next.js) → DigitalOcean VM (Caddy :80 → OpenClaw :18789) → Vercel AI Gateway → Mistral
 ```
 
 ---
@@ -21,7 +21,7 @@ Browser → Vercel (Next.js) → DigitalOcean VM (Caddy :80 → OpenClaw :18789)
 | User        | `neal` (sudo, SSH key auth)        |
 | Node.js     | v22.22.1                           |
 | npm         | 10.9.4                             |
-| OpenClaw    | 2026.3.13 (61d171a)               |
+| OpenClaw    | 2026.4.2 (d74a122)                |
 
 ### SSH access
 
@@ -70,17 +70,18 @@ Key settings:
 - `gateway.bind`: "lan"
 - `gateway.auth.mode`: "token" (bearer token in config)
 - `gateway.http.endpoints.chatCompletions.enabled`: true
-- `agents.defaults.model.primary`: `openai-codex/gpt-5.4` (OpenAI Codex via OAuth)
-- `agents.defaults.model.fallbacks`: `vercel-ai-gateway/google/gemini-3.1-flash-lite-preview`
-- `tools.byProvider` restricts Gemini to `minimal` profile (no tool calls)
-- `agents.defaults.heartbeat.model`: Gemini (cheap pings every 30m)
+- `agents.defaults.model.primary`: `vercel-ai-gateway/mistral/mistral-medium`
+- Model aliases: `poe` (Medium, substitute for Large 3), `small` (Mistral Small), `dev` (Devstral 2)
+- `agents.defaults.heartbeat.model`: `vercel-ai-gateway/mistral/mistral-small`
+- All models routed through Vercel AI Gateway (no direct Mistral API key needed)
+- See `docs/models.md` for the full model policy, routing rules, and substitution notes
 
 ### Environment variables (in systemd unit)
 
 | Variable                     | Purpose                                   |
 |------------------------------|-------------------------------------------|
 | `OPENCLAW_GATEWAY_PASSWORD`  | Gateway admin password                    |
-| `AI_GATEWAY_API_KEY`         | Vercel AI Gateway API key                 |
+| `AI_GATEWAY_API_KEY`         | Vercel AI Gateway key (routes to Mistral) |
 | `HOME`                       | Set to `/home/neal`                       |
 | `OPENCLAW_NO_RESPAWN`        | Set to `1`                                |
 
@@ -177,9 +178,12 @@ Set these in Vercel (or `.env.local` for local dev):
 | `PAPERCLIP_POE_AGENT_ID` | `24b159a0-...`                  | Poe route (proxy)  |
 
 `POE_RUNTIME_MODE` controls whether Poe chat routes through OpenClaw directly
-(`openclaw-direct`, the default) or through Paperclip (`paperclip-proxy`).
+(`openclaw-direct`, the default and current production mode) or through
+Paperclip (`paperclip-proxy`). Paperclip is used for async admin operations
+(routines, issues, heartbeats), not live guest chat.
 The `PAPERCLIP_*` vars are only needed when mode is `paperclip-proxy`.
-See `docs/poe-paperclip-proxy.md` for the full HTTP contract.
+See `docs/poe-paperclip-proxy.md` for the HTTP contract and `docs/models.md`
+for the model policy.
 
 These are read **only** in server-side route handlers, never exposed to the client.
 
@@ -265,7 +269,7 @@ curl -sS http://127.0.0.1:3100/api/health
 - [ ] Connect repo to Vercel project
 - [ ] Implement Claude and Chrissie personas
 - [ ] Add authentication (Clerk or similar)
-- [ ] Move AI_GATEWAY_API_KEY to OIDC/token-based auth
+- [x] Replace OpenAI/Gemini with Mistral models (Large 3, Small 4, Devstral 2)
 - [ ] Add database for conversation persistence
 - [ ] Expose Paperclip UI via Caddy (when ready for external access)
 - [ ] Enable Portier Poe heartbeat once OpenClaw wiring is verified end-to-end

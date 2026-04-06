@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { POE_SYSTEM_PROMPT } from "@/lib/personas";
+import { buildPoeSystemPrompt } from "@/lib/personas";
 import {
   getPoeRuntimeMode,
   getOpenClawConfig,
   getPaperclipConfig,
 } from "@/lib/poe-runtime";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -196,8 +197,24 @@ export const POST = async (request: Request) => {
 
   const { sessionId, isNew } = await getOrCreateSessionId();
 
+  let userName: string | null = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("title")
+        .eq("id", user.id)
+        .single();
+      userName = profile?.title ?? null;
+    }
+  } catch {
+    // Non-fatal: fall back to generic prompt if profile lookup fails
+  }
+
   const messages = [
-    { role: "system" as const, content: POE_SYSTEM_PROMPT },
+    { role: "system" as const, content: buildPoeSystemPrompt(userName) },
     ...body.messages,
   ];
 

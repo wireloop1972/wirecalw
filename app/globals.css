@@ -354,6 +354,162 @@ body {
   }
 }
 
+/* --- Auth pages: gjest-themed login/register/invite --- */
+
+.gjest-auth-page {
+  --gjest-teal: #365c6b;
+  --gjest-teal-light: #4a7a8a;
+  --gjest-teal-deep: #2b4a57;
+  --gjest-ink: #2a2a2a;
+  --gjest-ink-muted: #6b7578;
+  --gjest-bg: #ffffff;
+  --gjest-bg-warm: #f8f6f3;
+  --gjest-border: rgba(54, 92, 107, 0.18);
+  --gjest-paper: #faf9f7;
+  background: var(--gjest-bg-warm);
+  color: var(--gjest-ink);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.gjest-auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--gjest-paper);
+  border: 1px solid var(--gjest-border);
+  border-radius: 6px;
+  padding: 2rem 1.5rem;
+  box-shadow:
+    0 4px 16px rgba(43, 74, 87, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+@media (min-width: 640px) {
+  .gjest-auth-card {
+    padding: 2.5rem 2rem;
+  }
+}
+
+.gjest-auth-heading {
+  font-family: var(--font-libre-baskerville), "Libre Baskerville", Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--gjest-teal-deep);
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.gjest-auth-subheading {
+  font-size: 0.8125rem;
+  color: var(--gjest-ink-muted);
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.gjest-auth-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gjest-teal);
+  margin-bottom: 0.35rem;
+}
+
+.gjest-auth-input {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid rgba(54, 92, 107, 0.3);
+  background: transparent;
+  padding: 0.6rem 0.25rem;
+  font-size: 1rem;
+  color: var(--gjest-ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.gjest-auth-input:focus {
+  border-bottom-color: var(--gjest-teal);
+}
+
+.gjest-auth-input::placeholder {
+  color: rgba(42, 42, 42, 0.35);
+}
+
+.gjest-auth-input:read-only {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.gjest-auth-input:disabled {
+  opacity: 0.4;
+}
+
+.gjest-auth-btn {
+  display: block;
+  width: 100%;
+  color: #ffffff;
+  background: var(--gjest-teal);
+  border: 1px solid var(--gjest-teal-deep);
+  border-radius: 2rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(43, 74, 87, 0.2);
+  transition: background 0.15s;
+}
+
+.gjest-auth-btn:hover {
+  background: var(--gjest-teal-light);
+}
+
+.gjest-auth-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gjest-auth-error {
+  border: 1px solid rgba(107, 48, 48, 0.3);
+  background: rgba(107, 48, 48, 0.06);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #6b3030;
+  margin-bottom: 1rem;
+}
+
+.gjest-auth-field {
+  margin-bottom: 1.25rem;
+}
+
+.gjest-auth-select {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid rgba(54, 92, 107, 0.3);
+  background: transparent;
+  padding: 0.6rem 0.25rem;
+  font-size: 1rem;
+  color: var(--gjest-ink);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.gjest-auth-select:focus {
+  border-bottom-color: var(--gjest-teal);
+}
+
 /* Selection in gjest-page */
 
 .gjest-page ::selection {

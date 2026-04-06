@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useInkStream } from "@/hooks/useInkStream";
 import { usePoeChat, type ChatEntry } from "@/hooks/usePoeChat";
+import { useUser } from "@/lib/supabase/user-context";
 
 const DropCap = ({ letter }: { letter: string }) => (
   <span className="gjest-drop-cap float-left font-display" aria-hidden>
@@ -136,9 +137,15 @@ const PortierQueued = () => (
   </div>
 );
 
-const GuestInscription = ({ text }: { text: string }) => (
+const GuestInscription = ({
+  text,
+  displayName,
+}: {
+  text: string;
+  displayName: string;
+}) => (
   <div className="gjest-guest-lane">
-    <span className="gjest-lane-label">Gjest</span>
+    <span className="gjest-lane-label">{displayName}</span>
     <p className="gjest-guest-body mt-1 text-pretty">{text}</p>
   </div>
 );
@@ -149,12 +156,14 @@ const EntryBlock = ({
   nextStreamEntryId,
   onStreamDone,
   scrollRef,
+  guestName,
 }: {
   entry: ChatEntry;
   streamSettled: Record<string, boolean>;
   nextStreamEntryId: string | null;
   onStreamDone: (id: string) => void;
   scrollRef: RefObject<HTMLDivElement | null>;
+  guestName: string;
 }) => {
   if (entry.role === "portier") {
     if (streamSettled[entry.id]) {
@@ -172,10 +181,12 @@ const EntryBlock = ({
     return <PortierQueued />;
   }
 
-  return <GuestInscription text={entry.text} />;
+  return <GuestInscription text={entry.text} displayName={guestName} />;
 };
 
 const PoeChat = () => {
+  const user = useUser();
+  const guestName = user.title ?? user.email.split("@")[0];
   const {
     entries,
     streamSettled,
@@ -240,6 +251,7 @@ const PoeChat = () => {
                 nextStreamEntryId={nextStreamEntryId}
                 onStreamDone={onStreamDone}
                 scrollRef={scrollRef}
+                guestName={guestName}
               />
             ))}
             {isLoading && entries.length > 0 && <PortierQueued />}

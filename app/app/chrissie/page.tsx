@@ -16,7 +16,7 @@ const ChrissiePage = () => (
       wisdom and genuine warmth. Chrissie is being prepared for service.
     </p>
     <Link
-      href="/"
+      href="/app"
       className="mt-8 text-sm text-wl-muted transition-colors hover:text-wl-orange"
     >
       &larr; Back to assistants

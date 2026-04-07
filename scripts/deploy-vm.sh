@@ -28,7 +28,7 @@ ssh "$VM_HOST" "cd ~/openclaw-plugins/planday-query-tool && openclaw plugins ins
 echo "[4/5] Checking systemd env for PLANDAY_QUERY_URL..."
 ssh "$VM_HOST" "grep -q PLANDAY_QUERY_URL /etc/systemd/system/openclaw.service || {
   echo 'Adding PLANDAY_QUERY_URL to openclaw.service'
-  sudo sed -i '/^\[Service\]/a Environment=PLANDAY_QUERY_URL=https://wireclaw.vercel.app' /etc/systemd/system/openclaw.service
+  sudo sed -i '/^\[Service\]/a Environment=PLANDAY_QUERY_URL=https://wirecalw.vercel.app' /etc/systemd/system/openclaw.service
   sudo systemctl daemon-reload
 }"
 

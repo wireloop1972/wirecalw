@@ -36,7 +36,7 @@
 ```
 
 **End-to-end:** User → Poe chat → OpenClaw + skill → `planday_query` →
-`POST https://wireclaw.vercel.app/api/planday/query` → JSON → Norwegian answer.
+`POST https://wirecalw.vercel.app/api/planday/query` → JSON → Norwegian answer.
 
 ## Three tracks
 
@@ -50,7 +50,7 @@
 
 **Vercel / `.env.local`:** `PLANDAY_APP_ID` (fallback `PALNDAY_APP_ID`), `PLANDAY_TOKEN`, `CRON_SECRET`, `OPENCLAW_GATEWAY_TOKEN` (and Supabase vars).
 
-**VM:** `~/.openclaw/planday-query.json` holds `queryUrl` + `bearerToken` (see `scripts/vm-init-planday-query.sh`). OpenClaw **2026.4.x** rejects `agents.defaults.skills` in `openclaw.json` — use `skills.entries` + SKILL.md folders only. **`bearerToken` must match Vercel `OPENCLAW_GATEWAY_TOKEN`.**
+**VM:** `~/.openclaw/planday-query.json` holds `queryUrl` + `bearerToken` (see `scripts/vm-init-planday-query.sh`). OpenClaw **2026.4.x** rejects `agents.defaults.skills` in `openclaw.json` — use `skills.entries` + SKILL.md folders only. **`bearerToken` must match Vercel `OPENCLAW_GATEWAY_TOKEN`.** Do not rename **wireclaw** → **wirecalw** inside `openclaw.json` for provider or display naming; **wirecalw** belongs only in URL hosts (`queryUrl`, `PLANDAY_QUERY_URL`).
 
 ## Deploy workflow
 
@@ -64,10 +64,10 @@ Also: `chmod +x scripts/deploy-vm.sh scripts/deploy-paperclip-skills.sh` on Unix
 
 ## Verification (8 steps)
 
-1. `GET https://wireclaw.vercel.app/api/planday/status` → `planday_auth: "ok"`.
+1. `GET https://wirecalw.vercel.app/api/planday/status` → `planday_auth: "ok"`.
 2. Supabase: `planday_*` tables exist.
-3. `GET https://wireclaw.vercel.app/api/planday/sync` with `Authorization: Bearer $CRON_SECRET` → per-entity results.
-4. `POST https://wireclaw.vercel.app/api/planday/query` with `Authorization: Bearer $OPENCLAW_GATEWAY_TOKEN` and body `{"sql":"SELECT first_name, last_name FROM planday_employees LIMIT 3"}`.
+3. `GET https://wirecalw.vercel.app/api/planday/sync` with `Authorization: Bearer $CRON_SECRET` → per-entity results.
+4. `POST https://wirecalw.vercel.app/api/planday/query` with `Authorization: Bearer $OPENCLAW_GATEWAY_TOKEN` and body `{"sql":"SELECT first_name, last_name FROM planday_employees LIMIT 3"}`.
 5. `ssh neal@167.99.128.115` → `ls ~/.openclaw/skills/planday-*/SKILL.md` (5 files).
 6. `openclaw tools list` on VM includes **`planday_query`**.
 7. Browser Poe chat: e.g. “Hvem jobber i morgen?” → tool call → answer.

@@ -76,6 +76,14 @@ Key settings:
 - All models routed through Vercel AI Gateway (no direct Mistral API key needed)
 - See `docs/models.md` for the full model policy, routing rules, and substitution notes
 
+**Product name vs Vercel URL:** Keep **wireclaw** as the stack/product name inside
+`openclaw.json` (agent labels, descriptions, session/project identifiers, and
+similar). The GitHub/Vercel project is **wirecalw**; only **full URLs** should use
+the host `https://wirecalw.vercel.app` — in practice `~/.openclaw/planday-query.json`
+(`queryUrl`) and optional systemd `PLANDAY_QUERY_URL`. If a repo rename slipped
+`wirecalw` into non-URL fields in `openclaw.json`, change those back to
+**wireclaw** and restart the gateway.
+
 ### Environment variables (in systemd unit)
 
 | Variable                     | Purpose                                   |
@@ -270,7 +278,7 @@ curl -sS http://127.0.0.1:3100/api/health
 ```
 Vercel Cron (30min) → /api/planday/sync → Planday API → Supabase planday_*
 Vercel Cron (daily) → /api/planday/sync-payroll → Planday API → Supabase
-VM agents → planday_query tool → https://wireclaw.vercel.app/api/planday/query → Supabase (SELECT only)
+VM agents → planday_query tool → https://wirecalw.vercel.app/api/planday/query → Supabase (SELECT only)
 ```
 
 ### Environment variables
@@ -282,7 +290,7 @@ VM agents → planday_query tool → https://wireclaw.vercel.app/api/planday/que
 | `CRON_SECRET` | Vercel | Auth for Vercel Cron (`Authorization: Bearer …`) |
 | `OPENCLAW_GATEWAY_TOKEN` | Vercel | Same bearer as the gateway token on the VM; `/api/planday/query` validates it |
 
-**VM — `planday_query` auth (file-based):** The plugin reads `~/.openclaw/planday-query.json` (not shell env — OpenClaw’s installer blocks `process.env` + `fetch` in plugins). Generate it with `scripts/vm-init-planday-query.sh` on the VM (copies `bearerToken` from `gateway.auth.token` in `openclaw.json`). **Set Vercel `OPENCLAW_GATEWAY_TOKEN` to that same string** so calls to `https://wireclaw.vercel.app/api/planday/query` succeed. Optional: `queryUrl` in that file (default `https://wireclaw.vercel.app`).
+**VM — `planday_query` auth (file-based):** The plugin reads `~/.openclaw/planday-query.json` (not shell env — OpenClaw’s installer blocks `process.env` + `fetch` in plugins). Generate it with `scripts/vm-init-planday-query.sh` on the VM (copies `bearerToken` from `gateway.auth.token` in `openclaw.json`). **Set Vercel `OPENCLAW_GATEWAY_TOKEN` to that same string** so calls to `https://wirecalw.vercel.app/api/planday/query` succeed. Optional: `queryUrl` in that file (default `https://wirecalw.vercel.app`).
 
 **Restart OpenClaw** after plugin or config changes: `sudo systemctl restart openclaw` (password required on the VM).
 
@@ -319,7 +327,7 @@ Uses `scripts/paperclip-planday-skills.sql` against embedded Postgres (`127.0.0.
 ```bash
 ssh neal@167.99.128.115 'openclaw status'
 ssh neal@167.99.128.115 'openclaw tools list'
-curl -sS https://wireclaw.vercel.app/api/planday/status
+curl -sS https://wirecalw.vercel.app/api/planday/status
 ```
 
 ---

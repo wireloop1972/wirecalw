@@ -106,7 +106,7 @@ Mistral Small instead of the more expensive primary model.
 
 Workforce data is cached in Supabase `planday_*` tables (synced from Planday via
 Vercel Cron). Agents query it with the OpenClaw tool **`planday_query`**, which
-POSTs read-only SQL to `https://wireclaw.vercel.app/api/planday/query` with the
+POSTs read-only SQL to `https://wirecalw.vercel.app/api/planday/query` with the
 gateway bearer.
 
 ### OpenClaw skills (`SKILL.md` on VM, source in `packages/openclaw-skills/`)

@@ -1,11 +1,14 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { AppRole } from "@/lib/user-profile";
 
 export interface UserProfile {
   id: string;
   email: string;
-  role: "admin" | "member";
+  role: AppRole;
+  firstName: string | null;
+  lastName: string | null;
   title: string | null;
   phoneNumber: string | null;
 }

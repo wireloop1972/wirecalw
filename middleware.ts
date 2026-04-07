@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveAfterLogin } from "@/lib/post-login-redirect";
 
 const PUBLIC_PATHS = [
   "/auth/login",
@@ -46,10 +47,14 @@ export const middleware = async (request: NextRequest) => {
   }
 
   if (user && (pathname === "/auth/login" || pathname === "/auth/register")) {
-    const appUrl = request.nextUrl.clone();
-    appUrl.pathname = "/app";
-    appUrl.searchParams.delete("next");
-    return NextResponse.redirect(appUrl);
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    const nextParam = request.nextUrl.searchParams.get("next");
+    const dest = resolveAfterLogin(profile?.role, nextParam ?? "/app");
+    return NextResponse.redirect(new URL(dest, request.nextUrl.origin));
   }
 
   return response;

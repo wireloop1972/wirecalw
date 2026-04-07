@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { resolveAfterLogin } from "@/lib/post-login-redirect";
 
 const ENABLE_SMS_2FA = false;
 
@@ -39,13 +40,13 @@ export const LoginForm = () => {
         return;
       }
 
-      if (ENABLE_SMS_2FA) {
-        const { data: profile } = await supabase
-          .from("users")
-          .select("phone_number")
-          .eq("id", user.id)
-          .single();
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role, phone_number")
+        .eq("id", user.id)
+        .single();
 
+      if (ENABLE_SMS_2FA) {
         if (profile?.phone_number) {
           const { error: otpError } = await supabase.auth.signInWithOtp({
             phone: profile.phone_number,
@@ -60,8 +61,9 @@ export const LoginForm = () => {
         }
       }
 
-      const next = searchParams.get("next") ?? "/app";
-      router.push(next);
+      const nextParam = searchParams.get("next");
+      const dest = resolveAfterLogin(profile?.role, nextParam ?? "/app");
+      router.push(dest);
       router.refresh();
     } catch {
       setError("Noe gikk galt. Prøv igjen.");

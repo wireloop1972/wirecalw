@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useUser } from "@/lib/supabase/user-context";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { APP_ROLES, isAppRole, roleLabelNb, type AppRole } from "@/lib/user-profile";
 
 interface Invite {
   id: string;
   email: string;
   role: string;
-  title: string | null;
   expires_at: string;
   accepted_at: string | null;
   created_at: string;
@@ -18,8 +18,7 @@ const AdminInvitesPage = () => {
   const user = useUser();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("member");
-  const [title, setTitle] = useState("");
+  const [role, setRole] = useState<AppRole>("employee");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +27,7 @@ const AdminInvitesPage = () => {
     const supabase = createSupabaseBrowserClient();
     const { data } = await supabase
       .from("invites")
-      .select("id, email, role, title, expires_at, accepted_at, created_at")
+      .select("id, email, role, expires_at, accepted_at, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
     if (data) setInvites(data);
@@ -66,7 +65,6 @@ const AdminInvitesPage = () => {
         body: JSON.stringify({
           email: email.trim(),
           role,
-          title: title.trim() || undefined,
         }),
       });
       const json = await res.json();
@@ -76,8 +74,7 @@ const AdminInvitesPage = () => {
       } else {
         setMessage(`Invitasjon sendt til ${email}`);
         setEmail("");
-        setTitle("");
-        setRole("member");
+        setRole("employee");
         loadInvites();
       }
     } catch {
@@ -130,42 +127,26 @@ const AdminInvitesPage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="inv-role"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wider text-wl-muted"
-                >
-                  Rolle
-                </label>
-                <select
-                  id="inv-role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  disabled={loading}
-                  className="w-full rounded border border-wl-border bg-wl-raised px-3 py-2 text-sm text-wl-text focus:border-wl-orange focus:outline-none"
-                >
-                  <option value="member">Medlem</option>
-                  <option value="admin">Administrator</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="inv-title"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wider text-wl-muted"
-                >
-                  Tittel (valgfritt)
-                </label>
-                <input
-                  id="inv-title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  disabled={loading}
-                  placeholder="F.eks. Daglig leder"
-                  className="w-full rounded border border-wl-border bg-wl-raised px-3 py-2 text-sm text-wl-text placeholder:text-wl-muted/50 focus:border-wl-orange focus:outline-none"
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="inv-role"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wider text-wl-muted"
+              >
+                Rolle
+              </label>
+              <select
+                id="inv-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as AppRole)}
+                disabled={loading}
+                className="w-full rounded border border-wl-border bg-wl-raised px-3 py-2 text-sm text-wl-text focus:border-wl-orange focus:outline-none"
+              >
+                {APP_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {roleLabelNb[r]}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button
@@ -206,7 +187,9 @@ const AdminInvitesPage = () => {
                         className="bg-wl-raised/50 text-wl-text"
                       >
                         <td className="px-4 py-2">{inv.email}</td>
-                        <td className="px-4 py-2 capitalize">{inv.role}</td>
+                        <td className="px-4 py-2">
+                          {isAppRole(inv.role) ? roleLabelNb[inv.role] : inv.role}
+                        </td>
                         <td className="px-4 py-2">{fmt(inv.expires_at)}</td>
                         <td className="px-4 py-2">
                           {inv.accepted_at ? (

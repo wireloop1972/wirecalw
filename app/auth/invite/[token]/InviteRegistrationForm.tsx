@@ -3,24 +3,25 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { homePathForUser } from "@/lib/post-login-redirect";
+import type { AppRole } from "@/lib/user-profile";
 
 const ENABLE_SMS_2FA = false;
 
 interface InviteRegistrationFormProps {
   token: string;
   email: string;
-  inviteRole: string;
-  inviteTitle: string | null;
+  inviteRole: AppRole;
 }
 
 export const InviteRegistrationForm = ({
   token,
   email,
   inviteRole,
-  inviteTitle,
 }: InviteRegistrationFormProps) => {
   const router = useRouter();
-  const [title, setTitle] = useState(inviteTitle ?? "");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,8 @@ export const InviteRegistrationForm = ({
         .from("users")
         .update({
           role: inviteRole,
-          title: title || null,
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
           phone_number: phone || null,
         })
         .eq("id", userId);
@@ -78,7 +80,7 @@ export const InviteRegistrationForm = ({
         }
       }
 
-      router.push("/app");
+      router.push(homePathForUser(inviteRole));
       router.refresh();
     } catch {
       setError("Noe gikk galt. Prøv igjen.");
@@ -104,15 +106,30 @@ export const InviteRegistrationForm = ({
       </div>
 
       <div className="gjest-auth-field">
-        <label htmlFor="invite-title" className="gjest-auth-label">
-          Navn / tittel
+        <label htmlFor="invite-first" className="gjest-auth-label">
+          Fornavn (valgfritt)
         </label>
         <input
-          id="invite-title"
+          id="invite-first"
           type="text"
-          placeholder="F.eks. Daglig leder"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          autoComplete="given-name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          disabled={loading}
+          className="gjest-auth-input"
+        />
+      </div>
+
+      <div className="gjest-auth-field">
+        <label htmlFor="invite-last" className="gjest-auth-label">
+          Etternavn (valgfritt)
+        </label>
+        <input
+          id="invite-last"
+          type="text"
+          autoComplete="family-name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           disabled={loading}
           className="gjest-auth-input"
         />

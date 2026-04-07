@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { randomBytes } from "node:crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAppRole, type AppRole } from "@/lib/user-profile";
 
 const INVITE_EXPIRY_DAYS = 7;
 
@@ -39,8 +40,9 @@ export const POST = async (request: NextRequest) => {
 
     const body = await request.json();
     const email = (body.email ?? "").trim().toLowerCase();
-    const role = body.role === "admin" ? "admin" : "member";
-    const title = (body.title ?? "").trim() || null;
+    const rawRole =
+      typeof body.role === "string" ? body.role.trim().toLowerCase() : "";
+    const role: AppRole = isAppRole(rawRole) ? rawRole : "employee";
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
@@ -75,12 +77,11 @@ export const POST = async (request: NextRequest) => {
       .insert({
         email,
         role,
-        title,
         created_by: user.id,
         token,
         expires_at: expiresAt.toISOString(),
       })
-      .select("id, email, role, title, expires_at")
+      .select("id, email, role, expires_at")
       .single();
 
     if (insertError) {

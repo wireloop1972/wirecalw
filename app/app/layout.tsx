@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserProvider, type UserProfile } from "@/lib/supabase/user-context";
+import { isAppRole } from "@/lib/user-profile";
 
 const AppLayout = async ({ children }: { children: React.ReactNode }) => {
   const supabase = await createSupabaseServerClient();
@@ -10,14 +11,17 @@ const AppLayout = async ({ children }: { children: React.ReactNode }) => {
 
   const { data: dbUser } = await supabase
     .from("users")
-    .select("id, email, role, title, phone_number")
+    .select("id, email, role, first_name, last_name, title, phone_number")
     .eq("id", user.id)
     .single();
 
+  const rawRole = dbUser?.role ?? "guest";
   const profile: UserProfile = {
     id: user.id,
     email: user.email ?? dbUser?.email ?? "",
-    role: dbUser?.role === "admin" ? "admin" : "member",
+    role: isAppRole(rawRole) ? rawRole : "guest",
+    firstName: dbUser?.first_name ?? null,
+    lastName: dbUser?.last_name ?? null,
     title: dbUser?.title ?? null,
     phoneNumber: dbUser?.phone_number ?? null,
   };

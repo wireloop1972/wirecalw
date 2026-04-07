@@ -8,9 +8,11 @@ import {
   useState,
   type RefObject,
 } from "react";
+import { PortierMessageMarkdown } from "@/components/chat/PortierMessageMarkdown";
 import { useInkStream } from "@/hooks/useInkStream";
 import { usePoeChat, type ChatEntry } from "@/hooks/usePoeChat";
 import { useUser } from "@/lib/supabase/user-context";
+import { formatDisplayName } from "@/lib/user-profile";
 
 const DropCap = ({ letter }: { letter: string }) => (
   <span className="gjest-drop-cap float-left font-display" aria-hidden>
@@ -43,9 +45,6 @@ const PortierStreamPresentation = ({
 
   const first = visibleSlice.charAt(0);
   const afterFirst = visibleSlice.slice(1);
-  const lastIdx = afterFirst.length - 1;
-  const bodyBeforeLast = lastIdx >= 0 ? afterFirst.slice(0, lastIdx) : "";
-  const lastVisible = lastIdx >= 0 ? afterFirst.charAt(lastIdx) : "";
 
   return (
     <div
@@ -56,20 +55,14 @@ const PortierStreamPresentation = ({
         <span className="gjest-lane-label">Portier Poe</span>
         {isStreaming && <span className="gjest-quill-pulse" aria-hidden />}
       </div>
-      <p
+      <div
         className="gjest-narrator-body text-pretty whitespace-pre-line"
         aria-live="polite"
       >
         {visibleCount > 0 ? (
           <>
             <DropCap letter={first} />
-            {bodyBeforeLast}
-            {lastVisible !== "" &&
-              (isStreaming ? (
-                <span className="gjest-ink-fresh">{lastVisible}</span>
-              ) : (
-                lastVisible
-              ))}
+            <PortierMessageMarkdown source={afterFirst} />
             {isStreaming && <InkCursor />}
           </>
         ) : (
@@ -80,7 +73,7 @@ const PortierStreamPresentation = ({
             <InkCursor />
           </>
         )}
-      </p>
+      </div>
     </div>
   );
 };
@@ -118,10 +111,14 @@ const PortierStatic = ({ text }: { text: string }) => {
       <div className="gjest-narrator-label-row">
         <span className="gjest-lane-label">Portier Poe</span>
       </div>
-      <p className="gjest-narrator-body text-pretty whitespace-pre-line">
-        <DropCap letter={first} />
-        {rest}
-      </p>
+      <div className="gjest-narrator-body text-pretty whitespace-pre-line">
+        {text.length > 0 ? (
+          <>
+            <DropCap letter={first} />
+            <PortierMessageMarkdown source={rest} />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 };
@@ -186,7 +183,12 @@ const EntryBlock = ({
 
 const PoeChat = () => {
   const user = useUser();
-  const guestName = user.title ?? user.email.split("@")[0];
+  const guestName = formatDisplayName({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    title: user.title,
+    email: user.email,
+  });
   const {
     entries,
     streamSettled,

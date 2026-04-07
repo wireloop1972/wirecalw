@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AssistantHomeLink } from "@/components/AssistantHomeLink";
 
 const ClaudePage = () => (
   <div className="flex min-h-screen flex-col items-center justify-center bg-wl-black px-6">
@@ -15,12 +15,11 @@ const ClaudePage = () => (
       A thoughtful conversationalist who balances rigorous analysis with
       creative flair. Claude is being prepared for service.
     </p>
-    <Link
-      href="/app"
+    <AssistantHomeLink
       className="mt-8 text-sm text-wl-muted transition-colors hover:text-wl-orange"
     >
       &larr; Back to assistants
-    </Link>
+    </AssistantHomeLink>
   </div>
 );
 

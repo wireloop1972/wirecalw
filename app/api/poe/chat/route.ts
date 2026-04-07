@@ -7,6 +7,7 @@ import {
   getPaperclipConfig,
 } from "@/lib/poe-runtime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { formatDisplayName } from "@/lib/user-profile";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -202,12 +203,20 @@ export const POST = async (request: Request) => {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const email = user.email ?? "";
       const { data: profile } = await supabase
         .from("users")
-        .select("title")
+        .select("first_name, last_name, title")
         .eq("id", user.id)
         .single();
-      userName = profile?.title ?? null;
+      userName = profile
+        ? formatDisplayName({
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            title: profile.title,
+            email,
+          })
+        : email.split("@")[0] ?? null;
     }
   } catch {
     // Non-fatal: fall back to generic prompt if profile lookup fails

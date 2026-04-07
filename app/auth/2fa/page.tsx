@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { homePathForUser } from "@/lib/post-login-redirect";
 
 const TwoFactorPage = () => {
   const router = useRouter();
@@ -51,7 +52,17 @@ const TwoFactorPage = () => {
         return;
       }
 
-      router.push("/app");
+      const { data: { user: u } } = await supabase.auth.getUser();
+      let role: string | undefined;
+      if (u) {
+        const { data: prof } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", u.id)
+          .single();
+        role = prof?.role;
+      }
+      router.push(homePathForUser(role));
       router.refresh();
     } catch {
       setError("Verifisering feilet. Prøv igjen.");

@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { personas, type Persona } from "@/lib/personas";
 
 const avatarConfig: Record<string, { image: string; ring: string }> = {
@@ -72,7 +74,7 @@ const AssistantCard = ({ persona }: { persona: Persona }) => {
   );
 };
 
-const DashboardPage = () => (
+const AssistantHubContent = () => (
   <div className="flex min-h-screen flex-col items-center bg-wl-black px-6 py-20">
     <div className="flex items-center gap-3">
       <div className="h-px w-8 bg-wl-orange" />
@@ -101,5 +103,22 @@ const DashboardPage = () => (
     </div>
   </div>
 );
+
+const DashboardPage = async () => {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/auth/login");
+  }
+  const { data: row } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (row?.role !== "admin") {
+    redirect("/app/poe");
+  }
+  return <AssistantHubContent />;
+};
 
 export default DashboardPage;

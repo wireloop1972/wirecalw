@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isAppRole, roleLabelNb } from "@/lib/user-profile";
 import { InviteRegistrationForm } from "./InviteRegistrationForm";
 
 interface InvitePageProps {
@@ -11,7 +12,7 @@ const InvitePage = async ({ params }: InvitePageProps) => {
 
   const { data: invite } = await supabase
     .from("invites")
-    .select("id, email, role, title, expires_at, accepted_at")
+    .select("id, email, role, expires_at, accepted_at")
     .eq("token", token)
     .single();
 
@@ -52,18 +53,20 @@ const InvitePage = async ({ params }: InvitePageProps) => {
     );
   }
 
+  const inviteRole = isAppRole(invite.role) ? invite.role : "employee";
+
   return (
     <>
       <h1 className="gjest-auth-heading">Registrering</h1>
       <p className="gjest-auth-subheading">
         Du er invitert som{" "}
-        <strong>{invite.role === "admin" ? "administrator" : "medlem"}</strong>
+        <strong>{roleLabelNb[inviteRole]}</strong>
+        . Tittel og visningsnavn kan du sette under profil etter innlogging.
       </p>
       <InviteRegistrationForm
         token={token}
         email={invite.email}
-        inviteRole={invite.role}
-        inviteTitle={invite.title}
+        inviteRole={inviteRole}
       />
     </>
   );

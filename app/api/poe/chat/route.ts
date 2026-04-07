@@ -78,6 +78,12 @@ const handleOpenClawDirect = async (
     headers["x-vercel-oidc-token"] = config.oidcToken;
   }
 
+  console.log(
+    "[poe/chat] openclaw-direct:",
+    `VERCEL_OIDC_TOKEN=${config.oidcToken ? "present" : "absent"}`,
+    `OPENCLAW_BASE_URL=${config.baseUrl ? "set" : "unset"}`,
+  );
+
   const response = await fetch(
     `${config.baseUrl}/v1/chat/completions`,
     {

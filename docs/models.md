@@ -120,18 +120,33 @@ Aliases are configured in `/home/neal/.openclaw/openclaw.json`:
 ## Auth Chain
 
 ```
-Browser → Vercel (Next.js, OIDC token) → OpenClaw (gateway) → Vercel AI Gateway → Mistral
+Browser → Vercel (Next.js) → OpenClaw (VM :18789) → Vercel AI Gateway → Mistral
 ```
 
 - All models route through the **Vercel AI Gateway** — single gateway,
   single observability layer, single billing path.
-- `AI_GATEWAY_API_KEY` (Vercel key, `vck_...`) authenticates OpenClaw to the
-  Vercel AI Gateway. Set in the systemd unit on the VM.
-- `VERCEL_OIDC_TOKEN` is provided by Vercel (auto-rotates daily in production,
-  refreshed via `vercel env pull` in dev). The Next.js route passes it to
-  OpenClaw as `x-vercel-oidc-token` for forward authentication.
-- **No** direct `MISTRAL_API_KEY` is needed.
+- **Self-hosted OpenClaw `2026.4.2`** resolves the bundled `vercel-ai-gateway`
+  provider using **`AI_GATEWAY_API_KEY` only** (see
+  `dist/extensions/vercel-ai-gateway/index.js`: single `api-key` auth method).
+  There is **no** built-in path that copies `x-vercel-oidc-token` from an
+  incoming `/v1/chat/completions` request into the upstream gateway
+  `Authorization` header. If that header is absent and no profile supplies a
+  key, runs fail with *No API key found for provider "vercel-ai-gateway"*
+  (`auth-profiles.json` / env resolution).
+- **`/api/poe/chat`** still sends `x-vercel-oidc-token` when
+  `VERCEL_OIDC_TOKEN` is set (Vercel production/preview). That is useful for
+  logging and for a **future** OpenClaw feature or fork; it does **not** change
+  upstream auth today.
+- **No** direct `MISTRAL_API_KEY` is needed for this stack.
 - **No** OpenAI or Google/Gemini credentials are used.
+
+### OIDC-only goal (gap)
+
+To authenticate the gateway with **only** Vercel OIDC and **no** static
+`AI_GATEWAY_API_KEY` on the VM, OpenClaw would need to treat the OIDC JWT
+(from `x-vercel-oidc-token` on the HTTP chat request) as the bearer credential
+for `vercel-ai-gateway` on that request. That is not implemented in `2026.4.2`;
+track upstream or supply a gateway API key on the VM until it exists.
 
 ---
 

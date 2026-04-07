@@ -5,6 +5,9 @@
  *
  *   openclaw-direct (default):
  *     Browser → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Model
+ *     (OpenClaw upstream to Vercel AI Gateway uses AI_GATEWAY_API_KEY on the VM;
+ *      VERCEL_OIDC_TOKEN is forwarded as x-vercel-oidc-token but is not used for
+ *      that upstream auth in OpenClaw 2026.4.2 — see docs/models.md.)
  *
  *   paperclip-proxy:
  *     Browser → /api/poe/chat (Vercel) → Paperclip :3100 → OpenClaw :18789 → Model

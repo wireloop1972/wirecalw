@@ -89,7 +89,7 @@ the host `https://wirecalw.vercel.app` — in practice `~/.openclaw/planday-quer
 | Variable                     | Purpose                                   |
 |------------------------------|-------------------------------------------|
 | `OPENCLAW_GATEWAY_PASSWORD`  | Gateway admin password                    |
-| `AI_GATEWAY_API_KEY`         | Vercel AI Gateway key (routes to Mistral) |
+| `AI_GATEWAY_API_KEY`         | Vercel AI Gateway key for **upstream** calls from OpenClaw to the gateway (required by OpenClaw `2026.4.2`; `x-vercel-oidc-token` from Next.js is not applied upstream today — see `docs/models.md`) |
 | `HOME`                       | Set to `/home/neal`                       |
 | `OPENCLAW_NO_RESPAWN`        | Set to `1`                                |
 

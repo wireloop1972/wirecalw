@@ -263,6 +263,67 @@ curl -sS http://127.0.0.1:3100/api/health
 
 ---
 
+## Planday integration
+
+### Data pipeline
+
+```
+Vercel Cron (30min) → /api/planday/sync → Planday API → Supabase planday_*
+Vercel Cron (daily) → /api/planday/sync-payroll → Planday API → Supabase
+VM agents → planday_query tool → https://wireclaw.vercel.app/api/planday/query → Supabase (SELECT only)
+```
+
+### Environment variables
+
+| Variable | Location | Purpose |
+|----------|----------|---------|
+| `PLANDAY_APP_ID` | Vercel | Planday Client ID |
+| `PLANDAY_TOKEN` | Vercel | Planday refresh token |
+| `CRON_SECRET` | Vercel | Auth for Vercel Cron (`Authorization: Bearer …`) |
+| `OPENCLAW_GATEWAY_TOKEN` | Vercel | Same bearer as the gateway token on the VM; `/api/planday/query` validates it |
+
+**VM — `planday_query` auth (file-based):** The plugin reads `~/.openclaw/planday-query.json` (not shell env — OpenClaw’s installer blocks `process.env` + `fetch` in plugins). Generate it with `scripts/vm-init-planday-query.sh` on the VM (copies `bearerToken` from `gateway.auth.token` in `openclaw.json`). **Set Vercel `OPENCLAW_GATEWAY_TOKEN` to that same string** so calls to `https://wireclaw.vercel.app/api/planday/query` succeed. Optional: `queryUrl` in that file (default `https://wireclaw.vercel.app`).
+
+**Restart OpenClaw** after plugin or config changes: `sudo systemctl restart openclaw` (password required on the VM).
+
+**Paperclip SQL:** `scripts/deploy-paperclip-skills.sh` needs `psql` on the VM — `sudo apt install -y postgresql-client` if missing.
+
+### VM paths (deployed from repo)
+
+| Path on VM | Source in repo |
+|------------|----------------|
+| `~/.openclaw/skills/planday-*` | `packages/openclaw-skills/` |
+| `~/openclaw-plugins/planday-query-tool/` | `packages/planday-query-tool/` |
+
+### Deploy (SSH + rsync)
+
+Plugin and SKILL.md sources live in git under `packages/`. From the **repo root**:
+
+```bash
+chmod +x scripts/deploy-vm.sh scripts/deploy-paperclip-skills.sh
+./scripts/deploy-vm.sh
+```
+
+**First-time OpenClaw:** merge `packages/openclaw-skills/openclaw-planday-config.json` into `/home/neal/.openclaw/openclaw.json` (skills + `tools.allow`); do not replace the whole file.
+
+**Paperclip company skills (idempotent):**
+
+```bash
+./scripts/deploy-paperclip-skills.sh
+```
+
+Uses `scripts/paperclip-planday-skills.sql` against embedded Postgres (`127.0.0.1:54329`, user `paperclip`). If the schema differs, adjust the SQL.
+
+### Useful checks
+
+```bash
+ssh neal@167.99.128.115 'openclaw status'
+ssh neal@167.99.128.115 'openclaw tools list'
+curl -sS https://wireclaw.vercel.app/api/planday/status
+```
+
+---
+
 ## TODO / Future work
 
 - [x] Add custom domain + HTTPS (Caddy auto-TLS) — `paperclip.wireloop.ai`

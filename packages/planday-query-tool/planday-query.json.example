@@ -1,0 +1,4 @@
+{
+  "queryUrl": "https://wireclaw.vercel.app",
+  "bearerToken": "paste-same-value-as-vercel-OPENCLAW_GATEWAY_TOKEN"
+}

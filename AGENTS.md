@@ -102,6 +102,43 @@ Mistral Small instead of the more expensive primary model.
 
 ---
 
+## Planday skills
+
+Workforce data is cached in Supabase `planday_*` tables (synced from Planday via
+Vercel Cron). Agents query it with the OpenClaw tool **`planday_query`**, which
+POSTs read-only SQL to `https://wireclaw.vercel.app/api/planday/query` with the
+gateway bearer.
+
+### OpenClaw skills (`SKILL.md` on VM, source in `packages/openclaw-skills/`)
+
+| Skill | Typical triggers | Tables |
+|-------|------------------|--------|
+| `planday-schedule` | Who is working, roster, shifts | `planday_shifts` + joins |
+| `planday-wages` | Wage costs, payroll, labor NOK | `planday_time_and_cost`, `planday_payroll_snapshots` |
+| `planday-absence` | Sick leave, sykefravær | `planday_shifts`, `planday_shift_types` |
+| `planday-staff` | Employees, headcount, departments | `planday_employees` |
+| `planday-punchclock` | Actual vs scheduled hours | `planday_punchclock` |
+
+### Plugin
+
+`planday-query` — local path `~/openclaw-plugins/planday-query-tool/` after
+`./scripts/deploy-vm.sh`. Registers **`planday_query`**.
+
+### Paperclip company skills
+
+Registered for NEV via `scripts/deploy-paperclip-skills.sh`: `planday-schedule-reader`,
+`planday-payroll-reporter`, `planday-absence-checker`, `planday-staff-lookup`,
+`planday-punchclock-reader`. Link them to Morning Briefing / Weekly Review in
+Paperclip admin.
+
+### Routing
+
+1. User asks a Planday question → matching skill guides SQL via **`planday_query`**.
+2. Tool → Vercel → Supabase RPC → JSON rows.
+3. Poe (or presentation agent) formats the answer; Devstral can draft SQL for heavy routines.
+
+---
+
 ## Runtime Architecture
 
 ```

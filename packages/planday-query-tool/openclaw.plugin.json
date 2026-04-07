@@ -1,0 +1,10 @@
+{
+  "id": "planday-query",
+  "name": "Planday Query",
+  "description": "Read-only SQL against Planday cache via Vercel /api/planday/query.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

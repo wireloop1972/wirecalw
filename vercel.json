@@ -1,4 +1,14 @@
 {
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/planday/sync",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/planday/sync-payroll",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

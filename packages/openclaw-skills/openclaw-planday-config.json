@@ -1,0 +1,15 @@
+{
+  "_comment": "Merge into ~/.openclaw/openclaw.json — do NOT replace the file. OpenClaw 2026.4.x does not support agents.defaults.skills; SKILL.md folders + skills.entries suffice.",
+  "tools": {
+    "allow": ["planday_query", "group:openclaw"]
+  },
+  "skills": {
+    "entries": {
+      "planday-schedule": { "enabled": true },
+      "planday-wages": { "enabled": true },
+      "planday-absence": { "enabled": true },
+      "planday-staff": { "enabled": true },
+      "planday-punchclock": { "enabled": true }
+    }
+  }
+}

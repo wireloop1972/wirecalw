@@ -74,14 +74,10 @@ const handleOpenClawDirect = async (
     "x-openclaw-agent-id": config.agentId,
     "x-session-key": `poe:${sessionId}`,
   };
-  if (config.oidcToken) {
-    headers["x-vercel-oidc-token"] = config.oidcToken;
-  }
-
   console.log(
     "[poe/chat] openclaw-direct:",
-    `VERCEL_OIDC_TOKEN=${config.oidcToken ? "present" : "absent"}`,
     `OPENCLAW_BASE_URL=${config.baseUrl ? "set" : "unset"}`,
+    `apiKey=${config.apiKey ? "set" : "MISSING"}`,
   );
 
   const response = await fetch(

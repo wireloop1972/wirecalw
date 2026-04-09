@@ -4,10 +4,9 @@
  * Two runtime modes, controlled by the POE_RUNTIME_MODE env var:
  *
  *   openclaw-direct (default):
- *     Browser → /api/poe/chat (Vercel) → Caddy :80 → OpenClaw :18789 → Model
- *     (OpenClaw upstream to Vercel AI Gateway uses AI_GATEWAY_API_KEY on the VM;
- *      VERCEL_OIDC_TOKEN is forwarded as x-vercel-oidc-token but is not used for
- *      that upstream auth in OpenClaw 2026.4.2 — see docs/models.md.)
+ *     Browser → /api/poe/chat (Vercel) → Caddy → OpenClaw :18789 → Model
+ *     Auth: static OPENCLAW_GATEWAY_TOKEN as Bearer. No OIDC — the Vercel
+ *     OIDC token rotates every 24 h and is not suitable for VM-side auth.
  *
  *   paperclip-proxy:
  *     Browser → /api/poe/chat (Vercel) → Paperclip :3100 → OpenClaw :18789 → Model
@@ -28,7 +27,6 @@ export const getOpenClawConfig = () => ({
   apiKey: process.env.OPENCLAW_API_KEY ?? process.env.OPENCLAW_GATEWAY_TOKEN,
   agentId: "main",
   model: "openclaw",
-  oidcToken: process.env.VERCEL_OIDC_TOKEN,
 });
 
 export const getPaperclipConfig = () => ({
